@@ -1,0 +1,26 @@
+<Project>
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>preview</LangVersion>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+		<!-- Build Quality -->
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<WarningsAsErrors>nullable</WarningsAsErrors>
+
+		<!-- Deterministic builds -->
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+		<!-- Trim safety for workers -->
+		<PublishTrimmed>false</PublishTrimmed>
+	</PropertyGroup>
+
+	<Target Name="FailIfPackageVersionIsDefined" BeforeTargets="CollectPackageReferences">
+		<Error Condition="'%(PackageReference.Version)' != ''" Text="Do not define Version in PackageReference. Use Directory.Packages.props instead." />
+	</Target>
+
+</Project>

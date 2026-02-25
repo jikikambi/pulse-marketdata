@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/Infra/">
+    <File Path="../infra/docker-compose.yml" />
+    <File Path="Dev.md" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Adapters/" />
+  <Folder Name="/src/Adapters/MarketData/">
+    <Project Path="src/MarketData.Adapter.Api.Client/MarketData.Adapter.Api.Client.csproj" Id="3dc5d042-646a-4ab2-ab60-5bbf02058782" />
+    <Project Path="src/MarketData.Adapter.Api/MarketData.Adapter.Api.csproj" Id="3c59ce00-2b71-42fa-a7c1-c8884a7ae8b8" />
+    <Project Path="src/MarketData.Adapter.Handler/MarketData.Adapter.Handler.csproj" Id="23a5377d-4359-4daf-8755-3069ac849d05" />
+    <Project Path="src/MarketData.Adapter.Shared/MarketData.Adapter.Shared.csproj" Id="cb885625-81af-45c6-b143-cccb817d89f6" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/SignalPulse.Abstractions/SignalPulse.Abstractions.csproj" />
+    <Project Path="src/SignalPulse.AI/SignalPulse.AI.csproj" Id="e9cfba2b-1dad-41da-9ef2-4c08f1ee6d46" />
+    <Project Path="src/SignalPulse.Caching/SignalPulse.Caching.csproj" />
+    <Project Path="src/SignalPulse.Common/SignalPulse.Common.csproj" />
+    <Project Path="src/SignalPulse.Messaging/SignalPulse.Messaging.csproj" />
+    <Project Path="src/SignalPulse.Persistence/SignalPulse.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Rdm/">
+    <Project Path="src/SignalPulse.Rdm.MarketData/SignalPulse.Rdm.MarketData.csproj" Id="5cf252a1-6a94-42cb-9ff7-3445f4e890e0" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/MarketData/">
+    <Project Path="src/SignalPulse.MarketData.Api/SignalPulse.MarketData.Api.csproj" Id="a755a870-081f-4344-85a3-2b89ec77deff" />
+    <Project Path="src/SignalPulse.MarketData.Application/SignalPulse.MarketData.Application.csproj" Id="fa90ea4e-1d5c-4309-8d96-7883ff205938" />
+    <Project Path="src/SignalPulse.MarketData.Contracts/SignalPulse.MarketData.Contracts.csproj" Id="d5cbc170-f146-4575-aa78-0b19a6e44521" />
+    <Project Path="src/SignalPulse.MarketData.Domain/SignalPulse.MarketData.Domain.csproj" Id="f2630ff8-eb47-43be-b98e-d829c13d098f" />
+    <Project Path="src/SignalPulse.MarketData.Infrastructure/SignalPulse.MarketData.Infrastructure.csproj" Id="99298f6e-2d44-4612-97e0-fd8d452f6e5f" />
+    <Project Path="src/SignalPulse.MarketData.Worker/SignalPulse.MarketData.Worker.csproj" Id="74cd628d-66c2-4468-8330-4749849fc775" />
+  </Folder>
+</Solution>

@@ -1,0 +1,62 @@
+{
+  "AAPL": {
+    "01. symbol": "AAPL",
+    "02. open": "181.20",
+    "03. high": "182.55",
+    "04. low": "180.40",
+    "05. price": "181.90",
+    "06. volume": "45322412",
+    "07. latest trading day": "2024-02-10",
+    "08. previous close": "181.10",
+    "09. change": "0.80",
+    "10. change percent": "0.44%"
+  },
+  "MSFT": {
+    "01. symbol": "MSFT",
+    "02. open": "392.12",
+    "03. high": "394.77",
+    "04. low": "389.55",
+    "05. price": "393.44",
+    "06. volume": "21833123",
+    "07. latest trading day": "2024-02-10",
+    "08. previous close": "391.90",
+    "09. change": "1.54",
+    "10. change percent": "0.39%"
+  },
+  "GOOGL": {
+    "01. symbol": "GOOGL",
+    "02. open": "142.20",
+    "03. high": "144.00",
+    "04. low": "141.22",
+    "05. price": "143.10",
+    "06. volume": "23444212",
+    "07. latest trading day": "2024-02-10",
+    "08. previous close": "142.50",
+    "09. change": "0.60",
+    "10. change percent": "0.42%"
+  },
+  "BTCUSD": {
+    "01. symbol": "BTCUSD",
+    "02. open": "42600",
+    "03. high": "43100",
+    "04. low": "41850",
+    "05. price": "42920",
+    "06. volume": "15420",
+    "07. latest trading day": "2024-02-10",
+    "08. previous close": "42500",
+    "09. change": "420",
+    "10. change percent": "0.99%"
+  },
+  "IBM": {
+    "01. symbol": "IBM",
+    "02. open": "165.20",
+    "03. high": "166.40",
+    "04. low": "164.11",
+    "05. price": "165.88",
+    "06. volume": "6432212",
+    "07. latest trading day": "2024-02-10",
+    "08. previous close": "164.50",
+    "09. change": "1.38",
+    "10. change percent": "0.84%"
+  }
+}

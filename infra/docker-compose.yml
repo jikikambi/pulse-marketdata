@@ -1,0 +1,110 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: pulse_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: signalpulsedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: pulse_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: pulse_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672" # AMQP
+      - "15672:15672" # Mgmt UI
+    environment:
+      RABBITMQ_DEFAULT_USER: pulse
+      RABBITMQ_DEFAULT_PASS: pulse
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  marketdata-adapter-handler:
+    build:
+      context: ../backend
+      dockerfile: src/MarketData.Adapter.Handler/Dockerfile
+    image: marketdata.adapter.handler
+    container_name: marketdata.adapter.handler
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Postgres__ConnectionString=Host=postgres;Port=5432;Database=signalpulsedb;Username=postgres;Password=postgres
+      - Redis__Connection=redis:6379
+    restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  marketData-adapter-api:
+    build:
+      context: ../backend
+      dockerfile: src/MarketData.Adapter.Api/Dockerfile
+    image: marketdata.adapter.api
+    container_name: marketdata.adapter.api
+    ports:
+      - 5069:80
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - "ASPNETCORE_URLS=http://+"
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: pulse_elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  elastic_data:

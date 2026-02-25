@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.SignalR" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SignalPulse.MarketData.Contracts\SignalPulse.MarketData.Contracts.csproj" />
+		<ProjectReference Include="..\SignalPulse.MarketData.Domain\SignalPulse.MarketData.Domain.csproj" />
+		<ProjectReference Include="..\SignalPulse.Persistence\SignalPulse.Persistence.csproj" />
+	</ItemGroup>
+
+</Project>

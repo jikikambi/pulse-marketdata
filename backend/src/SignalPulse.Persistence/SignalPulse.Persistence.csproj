@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<ItemGroup>
+		<PackageReference Include="WolverineFx.Marten" />
+		<PackageReference Include="Marten"/>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+		<PackageReference Include="StackExchange.Redis"/>
+	</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SignalPulse.Abstractions\SignalPulse.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>
