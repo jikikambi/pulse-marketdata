@@ -81,7 +81,6 @@ export class SpSignalrService {
         this.flushQueue();
     }
 
-
     private flushQueue() {
 
         const sortedSeqs = Array.from(this.queue.keys()).sort((a, b) => a - b);
