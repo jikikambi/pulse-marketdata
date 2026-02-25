@@ -12,7 +12,7 @@ public sealed class AlphaVantageQuoteConsumer(IMessageBus bus, ILogger<AlphaVant
         var quoteRdm = context.Message;
         var ct = context.CancellationToken;
 
-        logger.LogInformation(" [x] Received {Message}", quoteRdm.Symbol);
+        logger.LogInformation(" {Consumer} Received {Message}", nameof(AlphaVantageQuoteConsumer), quoteRdm.Symbol);
 
         await HandleAsync(quoteRdm, ct);
     }
