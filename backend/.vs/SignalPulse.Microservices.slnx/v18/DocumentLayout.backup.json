@@ -3,8 +3,12 @@
   "WorkspaceRootPath": "D:\\apps\\pulse-marketdata\\backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{FA90EA4E-1D5C-4309-8D96-7883FF205938}|src\\SignalPulse.MarketData.Application\\SignalPulse.MarketData.Application.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.application\\handlers\\alphavantagequoteconsumer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{FA90EA4E-1D5C-4309-8D96-7883FF205938}|src\\SignalPulse.MarketData.Application\\SignalPulse.MarketData.Application.csproj|solutionrelative:src\\signalpulse.marketdata.application\\handlers\\alphavantagequoteconsumer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.infrastructure\\messaging\\signalrevent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|solutionrelative:src\\signalpulse.marketdata.infrastructure\\messaging\\signalrevent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FA90EA4E-1D5C-4309-8D96-7883FF205938}|src\\SignalPulse.MarketData.Application\\SignalPulse.MarketData.Application.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.application\\handlers\\alphavantagequotehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FA90EA4E-1D5C-4309-8D96-7883FF205938}|src\\SignalPulse.MarketData.Application\\SignalPulse.MarketData.Application.csproj|solutionrelative:src\\signalpulse.marketdata.application\\handlers\\alphavantagequotehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -19,14 +23,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "AlphaVantageQuoteConsumer.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteConsumer.cs",
-              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteConsumer.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteConsumer.cs",
-              "RelativeToolTip": "src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteConsumer.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAgAAAAAAAAAA==",
+              "Title": "SignalREvent.cs",
+              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
+              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
+              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
+              "RelativeToolTip": "src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAABtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-25T15:19:22.621Z",
+              "WhenOpened": "2026-02-25T17:52:50.897Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AlphaVantageQuoteHandler.cs",
+              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
+              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
+              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
+              "RelativeToolTip": "src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
+              "ViewState": "AgIAACYAAAAAAAAAAAAIwC4AAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-25T16:44:25.881Z",
               "EditorCaption": ""
             }
           ]
