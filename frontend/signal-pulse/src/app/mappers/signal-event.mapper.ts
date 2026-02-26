@@ -1,5 +1,5 @@
 import { AIInsightPayload } from "../models/ai-insights.model";
-import { SignalREventEnvelope } from "../models/envelope.model";
+import { SignalREventEnvelope } from "../models/signalr-event-envelope.model";
 import { QuoteCreatedPayload } from "../models/quote-created.model";
 import { QuoteUpdatedPayload } from "../models/quote-updated.model";
 

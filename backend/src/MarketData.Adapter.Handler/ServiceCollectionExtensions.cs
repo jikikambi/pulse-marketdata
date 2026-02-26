@@ -11,9 +11,12 @@ public static class ServiceCollectionExtensions
 {
     public static void SignalREndpoint(this WebApplication app)
     {
-        app.MapGet("/config", (IConfiguration configuration) => new
+        app.MapGet("/config", (IConfiguration configuration) => 
         {
-            signalRHubUrl = configuration.GetValue<string>("SignalR:BaseUrl")
+            return Results.Json(new
+            {
+                signalRHubUrl = configuration.GetValue<string>("SignalR:BaseUrl")
+            });            
         });
     }
 

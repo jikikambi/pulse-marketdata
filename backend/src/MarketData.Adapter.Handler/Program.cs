@@ -50,6 +50,8 @@ builder.Services.AddHostedService<QuotePollingWorker>();
 
 var app = builder.Build();
 
+app.UseHttpsRedirection();
+
 // --- CORS ----
 app.UseCors(CORS_POLICY);
 

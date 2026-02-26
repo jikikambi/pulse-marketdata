@@ -3,48 +3,20 @@
   "WorkspaceRootPath": "D:\\apps\\pulse-marketdata\\backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{3C59CE00-2B71-42FA-A7C1-C8884A7AE8B8}|src\\MarketData.Adapter.Api\\MarketData.Adapter.Api.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{3C59CE00-2B71-42FA-A7C1-C8884A7AE8B8}|src\\MarketData.Adapter.Api\\MarketData.Adapter.Api.csproj|solutionrelative:src\\marketdata.adapter.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\appsettings.docker.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\appsettings.docker.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\marketdata.adapter.handler.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\marketdata.adapter.handler.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     },
     {
       "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{FA90EA4E-1D5C-4309-8D96-7883FF205938}|src\\SignalPulse.MarketData.Application\\SignalPulse.MarketData.Application.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.application\\handlers\\alphavantagequotehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{FA90EA4E-1D5C-4309-8D96-7883FF205938}|src\\SignalPulse.MarketData.Application\\SignalPulse.MarketData.Application.csproj|solutionrelative:src\\signalpulse.marketdata.application\\handlers\\alphavantagequotehandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.infrastructure\\messaging\\signalrdomaineventpublisher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|solutionrelative:src\\signalpulse.marketdata.infrastructure\\messaging\\signalrdomaineventpublisher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.infrastructure\\redisstore\\ieventsequencestore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|solutionrelative:src\\signalpulse.marketdata.infrastructure\\redisstore\\ieventsequencestore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\signalpulse.marketdata.infrastructure\\messaging\\signalrevent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{99298F6E-2D44-4612-97E0-FD8D452F6E5F}|src\\SignalPulse.MarketData.Infrastructure\\SignalPulse.MarketData.Infrastructure.csproj|solutionrelative:src\\signalpulse.marketdata.infrastructure\\messaging\\signalrevent.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|d:\\apps\\pulse-marketdata\\backend\\src\\marketdata.adapter.handler\\marketdata.adapter.handler.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{23A5377D-4359-4DAF-8755-3069AC849D05}|src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj|solutionrelative:src\\marketdata.adapter.handler\\marketdata.adapter.handler.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -54,8 +26,47 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 3,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
+              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
+              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-02-26T16:10:06.29Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MarketData.Adapter.Handler",
+              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
+              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
+              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
+              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-02-26T11:19:42.429Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\appsettings.Development.json",
+              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\appsettings.Development.json",
+              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-02-26T11:06:18.426Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Document",
               "DocumentIndex": 2,
@@ -64,160 +75,9 @@
               "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\ServiceCollectionExtensions.cs",
               "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\ServiceCollectionExtensions.cs",
               "RelativeToolTip": "src\\MarketData.Adapter.Handler\\ServiceCollectionExtensions.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-26T07:36:57.535Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "appsettings.Docker.json",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\appsettings.Docker.json",
-              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\appsettings.Docker.json",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\appsettings.Docker.json",
-              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\appsettings.Docker.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-02-26T07:36:19.085Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "appsettings.Development.json",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\appsettings.Development.json",
-              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\appsettings.Development.json",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\appsettings.Development.json",
-              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\appsettings.Development.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-02-26T07:34:56.309Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\Program.cs",
-              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\Program.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\Program.cs",
-              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADoAAAAwAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-26T07:32:20.03Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "launchSettings.json",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
-              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
-              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\Properties\\launchSettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-02-26T07:29:47.625Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "MarketData.Adapter.Handler",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
-              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
-              "RelativeToolTip": "src\\MarketData.Adapter.Handler\\MarketData.Adapter.Handler.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-02-26T07:29:38.488Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "IEventSequenceStore.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\RedisStore\\IEventSequenceStore.cs",
-              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Infrastructure\\RedisStore\\IEventSequenceStore.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\RedisStore\\IEventSequenceStore.cs",
-              "RelativeToolTip": "src\\SignalPulse.MarketData.Infrastructure\\RedisStore\\IEventSequenceStore.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAkAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-25T18:04:17.386Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "SignalRDomainEventPublisher.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalRDomainEventPublisher.cs",
-              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalRDomainEventPublisher.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalRDomainEventPublisher.cs",
-              "RelativeToolTip": "src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalRDomainEventPublisher.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAABWAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-25T17:53:23.78Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "SignalREvent.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
-              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
-              "RelativeToolTip": "src\\SignalPulse.MarketData.Infrastructure\\Messaging\\SignalREvent.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAABtAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-25T17:52:50.897Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "AlphaVantageQuoteHandler.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
-              "RelativeDocumentMoniker": "src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
-              "RelativeToolTip": "src\\SignalPulse.MarketData.Application\\Handlers\\AlphaVantageQuoteHandler.cs",
-              "ViewState": "AgIAACEAAAAAAAAAAAAAAC8AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-25T16:44:25.881Z",
-              "EditorCaption": ""
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "Orientation": 0,
-      "VerticalTabListWidth": 256,
-      "FloatingWindowState": {
-        "Id": "d38d639f-0dd8-484d-ad8a-c842f0edebf9",
-        "Display": 1,
-        "X": 0,
-        "Y": 6,
-        "Width": 1717,
-        "Height": 1391,
-        "WindowState": 0
-      },
-      "DocumentGroups": [
-        {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 0,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Api\\Program.cs",
-              "RelativeDocumentMoniker": "src\\MarketData.Adapter.Api\\Program.cs",
-              "ToolTip": "D:\\apps\\pulse-marketdata\\backend\\src\\MarketData.Adapter.Api\\Program.cs",
-              "RelativeToolTip": "src\\MarketData.Adapter.Api\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADEAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-26T07:50:16.46Z",
               "EditorCaption": ""
             }
           ]

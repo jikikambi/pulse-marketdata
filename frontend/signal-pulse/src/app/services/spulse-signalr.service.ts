@@ -1,8 +1,7 @@
 import { Injectable, signal } from "@angular/core";
 import * as SignalR from '@microsoft/signalr';
-import { SignalREvent } from "../models/signalr-event.model";
 import { mapSignalREvent } from "../mappers/signal-event.mapper";
-import { SignalREventEnvelope } from "../models/envelope.model";
+import { SignalREventEnvelope } from "../models/signalr-event-envelope.model";
 
 @Injectable({ providedIn: 'root' })
 export class SpSignalrService {
@@ -14,13 +13,13 @@ export class SpSignalrService {
     private readonly TTL_MS = 10 * 60 * 1000;
 
     /** Ordered queue for events waiting for missing sequence */
-    private readonly queue = new Map<number, SignalREvent>();
+    private readonly queue = new Map<number, SignalREventEnvelope>();
 
     /** Last emitted sequence number */
     private lastSequence = 0;
 
     /** Expose events for Angular to subscribe */
-    readonly genEvent = signal<SignalREvent | null>(null);
+    readonly genEvent = signal<SignalREventEnvelope | null>(null);
 
     private readonly eventsToSubscribe = [
         'quote.created',
@@ -58,7 +57,7 @@ export class SpSignalrService {
         }
     }
 
-    private handleEvent(evt: SignalREvent) {
+    private handleEvent(evt: SignalREventEnvelope) {
 
         const now = Date.now();
 

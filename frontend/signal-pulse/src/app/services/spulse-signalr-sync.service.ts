@@ -1,17 +1,19 @@
 import { effect, inject, Injectable } from "@angular/core";
 import { toSignal } from '@angular/core/rxjs-interop';
-import { BaseService } from "./base.service";
 import { SpSignalrService } from "./spulse-signalr.service";
 import { EntityCollectionServiceFactory } from "@ngrx/data";
 import { QuoteCreatedPayload } from "../models/quote-created.model";
 import { buildSignalREventHandlers } from "./helper/signalr-event-handlers";
+import { ConfigService } from "./config.service";
 
 @Injectable({ providedIn: 'root' })
-export class SpSignalrSyncService extends BaseService {
+export class SpSignalrSyncService {
 
     private readonly ecf = inject(EntityCollectionServiceFactory);
 
     private readonly quoteSvc = this.ecf.create<QuoteCreatedPayload>('Quote');
+
+    private readonly cfgSvc = inject(ConfigService);
 
     private readonly signalr = inject(SpSignalrService);
 
@@ -19,31 +21,34 @@ export class SpSignalrSyncService extends BaseService {
     readonly quoteSig = toSignal(this.quoteSvc.entities$, { initialValue: [] as QuoteCreatedPayload[] })
 
     constructor() {
-        super();
-        this.initializeSignalR();
-    }
 
-    private async initializeSignalR() {
+        console.log('[SpSignalrSyncService] ctor: setting up effects...');
 
-        console.log('[SpSignalrSyncService] initializing SignalR sync...');
-
-        await this.signalr.start(`${this.signalrUrl}`);
-
-        console.log('[SignalR] connected and syncing...');
-
-        // load mapping table from helper
-        const handlers = buildSignalREventHandlers({ quoteSvc: this.quoteSvc });
-
-        // React to quote changes
         effect(async () => {
+
+            if (!this.cfgSvc.ready()) return;
+
+            console.log('[SpSignalrSyncService] Config ready, starting SignalR...');
+
+            await this.signalr.start(this.cfgSvc.config!.signalRHubUrl);
+
+            console.log('[SignalR] connected and syncing...');
+        });
+
+        effect(() => {
 
             const evt = this.signalr.genEvent();
 
             if (!evt) return;
 
+            // load mapping table from helper
+            const handlers = buildSignalREventHandlers({ quoteSvc: this.quoteSvc, /*insightSvc: this.insightSvc*/ });
+
             const handler = handlers[evt.type];
 
             if (handler) handler(evt.payload);
         });
+        
+        this.cfgSvc.load();
     }
 }
