@@ -14,6 +14,21 @@ builder.Services.AddHandlerServices(builder.Configuration);
 // --- Refit ---
 builder.Services.AddAlphaVantageApi(builder.Configuration);
 
+// --- CORS ---
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CORS_POLICY, policy =>
+    {
+        policy.WithOrigins(corsOrigins ?? [])
+        .SetIsOriginAllowed(origin => true)
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+    });
+});
+
 // --- SIGNALR ---
 builder.Services.AddSignalR().AddMessagePackProtocol();
 
@@ -33,8 +48,20 @@ builder.Host.UseWolverine(opts =>
 // --- Background Worker ---
 builder.Services.AddHostedService<QuotePollingWorker>();
 
-var host = builder.Build();
+var app = builder.Build();
 
-host.MapHub<SignalPulseHub>("/hubs/signalpulse");
+// --- CORS ----
+app.UseCors(CORS_POLICY);
 
-await host.RunAsync();
+// --- SignalR Hub Endpoint ---
+app.MapHub<SignalPulseHub>("/hubs/signalpulse");
+
+// --- /config Dynamic Endpoint for Frontend ---
+app.SignalREndpoint();
+
+await app.RunAsync();
+
+public partial class Program
+{
+    public const string CORS_POLICY = "Frontend";
+}

@@ -9,6 +9,14 @@ namespace MarketData.Adapter.Handler;
 [ExcludeFromCodeCoverage(Justification = "No logic")]
 public static class ServiceCollectionExtensions
 {
+    public static void SignalREndpoint(this WebApplication app)
+    {
+        app.MapGet("/config", (IConfiguration configuration) => new
+        {
+            signalRHubUrl = configuration.GetValue<string>("SignalR:BaseUrl")
+        });
+    }
+
     public static void AddHandlerServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Options
