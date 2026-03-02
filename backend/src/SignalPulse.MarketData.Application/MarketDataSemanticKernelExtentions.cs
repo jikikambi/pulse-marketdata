@@ -12,7 +12,6 @@ public static class MarketDataSemanticKernelExtentions
     public static IServiceCollection AddMarketDataSemanticKernel(this IServiceCollection services, IConfiguration configuration)
     {
 
-
         services.AddPulseSemanticKernel(builder => 
         {
             // Configure kernel as needed
