@@ -2,8 +2,19 @@
 # Visual Studio / IDE
 # ===============================
 
-# VS cache (must ignore)
-.vs/
+# Ignore .vs folder in ANY subdirectory
+**/.vs/
+
+# Visual Studio generated caches
+*.v10.bin
+*.dtbcache
+*.dtbcache.v2
+*.futdcache
+*.futdcache.v2
+
+# Document layout (changes every time you open VS)
+DocumentLayout.json
+DocumentLayout.backup.json
 
 # User-specific files
 *.rsuser
