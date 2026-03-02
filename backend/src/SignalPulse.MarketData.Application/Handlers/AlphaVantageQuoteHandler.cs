@@ -17,12 +17,12 @@ namespace SignalPulse.MarketData.Application.Handlers;
 public sealed class AlphaVantageQuoteHandler(IAggregateRepository repo,
 IIdempotencyStore idemStore,
 IDomainEventPublisher publisher,
-IAiMarketInsightGenerator ai,
+IAiInsightProvider ai,
 IReadModelRepository<QuoteInsightReadModel> insightsRepo) : AggregateCommandHandler<QuoteAggregate>(repo, idemStore, publisher)
 {
     private readonly IAggregateRepository _repo = repo;
     private readonly IDomainEventPublisher _publisher = publisher;
-    private readonly IAiMarketInsightGenerator _ai = ai;
+    private readonly IAiInsightProvider _ai = ai;
     private readonly IReadModelRepository<QuoteInsightReadModel> _insightsRepo = insightsRepo;
 
     public async Task Handle(AlphaVantageQuoteRdm quoteRdm, CancellationToken ct)

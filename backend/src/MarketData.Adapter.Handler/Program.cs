@@ -36,7 +36,7 @@ builder.Services.AddSignalR().AddMessagePackProtocol();
 builder.Services.AddMarketDataRedisMarten(builder.Configuration);
 
 // --- Semantic Kernel ---
-builder.Services.AddMarketDataSemanticKernel();
+builder.Services.AddMarketDataSemanticKernel(builder.Configuration);
 
 // --- MassTransit + RabbitMQ + Wolverine ---
 builder.Services.AddMarketDataMassTransitRMq(builder.Configuration);
