@@ -76,11 +76,16 @@ packages/
 # ===============================
 # Docker
 # ===============================
+# Ignore docker-compose overrides, NOT Dockerfiles
 **/docker-compose.override.yml
 **/docker-compose.override.yaml
 **/docker-compose.*.yml
 **/docker-compose.*.yaml
-**/Dockerfile*
+
+# Do NOT ignore Dockerfiles
+# (Removed the incorrect `**/Dockerfile*`)
+
+# Ignore hidden .docker folder (used by some tools)
 **/.docker/
 
 # ===============================
