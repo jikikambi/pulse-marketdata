@@ -2,7 +2,7 @@
 
 namespace SignalPulse.MarketData.Contracts.Events;
 
-public record QuoteUpdated(string Symbol, decimal Price) : IDomainEvent, ISignalREvent<object>
+public record QuoteUpdated(string Symbol, decimal Price, decimal ChangePercent) : IDomainEvent, ISignalREvent<object>
 {
     public Guid AggregateId { get; init; }
     public DateTimeOffset OccurredAt { get; init; } = DateTimeOffset.UtcNow;
@@ -12,5 +12,7 @@ public record QuoteUpdated(string Symbol, decimal Price) : IDomainEvent, ISignal
     {
         Symbol,
         Price,
+        ChangePercent,
+        OccurredAt
     };
 }

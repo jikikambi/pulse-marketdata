@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiBaseUrl: '/api',
-  signalREndpoint: '/hubs/signalpulse', // resolved via proxy
+  apiBase: '/api',
+  signalREndpoint: '/hubs/signalpulse',
   configEndpoint: '/config'
 };

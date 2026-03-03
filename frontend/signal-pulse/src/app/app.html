@@ -5,4 +5,8 @@
     <span class="mr-4 font-semibold">{{title()}}</span>
   </mat-toolbar> 
 
+  <mat-card class="quotes-card mat-elevation-z4">
+    <app-dashboard [quotes]="quotes()" [insights]="aiInsight()"></app-dashboard>
+  </mat-card>
+
 </main>

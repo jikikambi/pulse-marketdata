@@ -55,6 +55,8 @@ app.UseHttpsRedirection();
 // --- CORS ----
 app.UseCors(CORS_POLICY);
 
+app.MapMinimalApis();
+
 // --- SignalR Hub Endpoint ---
 app.MapHub<SignalPulseHub>("/hubs/signalpulse");
 

@@ -6,5 +6,5 @@ export interface AIInsightPayload {
     direction: string;
     volatility: string;
     rationale: string;
-    timestamp: string;
+    observedAt: string;
 }

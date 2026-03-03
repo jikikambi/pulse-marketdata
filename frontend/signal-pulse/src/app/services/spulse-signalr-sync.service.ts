@@ -5,6 +5,7 @@ import { EntityCollectionServiceFactory } from "@ngrx/data";
 import { QuoteCreatedPayload } from "../models/quote-created.model";
 import { buildSignalREventHandlers } from "./helper/signalr-event-handlers";
 import { ConfigService } from "./config.service";
+import { AIInsightPayload } from "../models/ai-insights.model";
 
 @Injectable({ providedIn: 'root' })
 export class SpSignalrSyncService {
@@ -12,6 +13,7 @@ export class SpSignalrSyncService {
     private readonly ecf = inject(EntityCollectionServiceFactory);
 
     private readonly quoteSvc = this.ecf.create<QuoteCreatedPayload>('Quote');
+    private readonly insightSvc = this.ecf.create<AIInsightPayload>('AIInsight');
 
     private readonly cfgSvc = inject(ConfigService);
 
@@ -42,7 +44,7 @@ export class SpSignalrSyncService {
             if (!evt) return;
 
             // load mapping table from helper
-            const handlers = buildSignalREventHandlers({ quoteSvc: this.quoteSvc, /*insightSvc: this.insightSvc*/ });
+            const handlers = buildSignalREventHandlers({ quoteSvc: this.quoteSvc, insightSvc: this.insightSvc });
 
             const handler = handlers[evt.type];
 

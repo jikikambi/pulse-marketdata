@@ -1,0 +1,74 @@
+<mat-card appearance="outlined" class="card" >
+    <mat-card-title>🔥 Hot Stocks</mat-card-title>
+    <div class="list">
+
+        @for(s of hotStocks; track s.symbol) {
+        <div class="item">
+            <strong>{{ s.symbol }}</strong>
+            <span class="muted">Score: {{ s.hotScore }}</span>
+            <span [class.up]="s.changePercent > 0" [class.down]="s.changePercent < 0">
+                {{ s.changePercent | number:'1.2-2' }}%
+            </span>
+        </div>
+        }
+    </div>
+</mat-card>
+
+<div class="row">
+    <mat-card class="half-card" appearance="outlined">
+        <mat-card-title>🟢 Winners</mat-card-title>
+
+        @for(w of winners; track w.symbol){
+        <div class="item">
+            <strong>{{ w.symbol }}</strong>
+            <span class="up">{{ w.changePercent | number:'1.2-2' }}%</span>
+        </div>
+        }
+
+    </mat-card>
+
+    <mat-card class="half-card" appearance="outlined">
+        <mat-card-title>🔴 Losers</mat-card-title>
+
+        @for(l of losers; track l.symbol){
+        <div class="item">
+            <strong>{{ l.symbol }}</strong>
+            <span class="down">{{ l.changePercent | number:'1.2-2' }}%</span>
+        </div>
+        }
+    </mat-card>
+</div>
+
+<mat-card class="card sentiment-card" appearance="outlined">
+    <mat-card-title>📊 Market Sentiment</mat-card-title>
+    <div class="sentiment-row">
+        <div>Bullish: {{ sentimentSummary.bullish }}</div>
+        <div>Neutral: {{ sentimentSummary.neutral }}</div>
+        <div>Bearish: {{ sentimentSummary.bearish }}</div>
+    </div>
+</mat-card>
+
+<mat-card class="card" appearance="outlined">
+    <mat-card-title>🧠 AI Insight Feed</mat-card-title>
+
+    <div class="list">
+        @for(i of insightFeed; track i.id) {
+        <div class="insight-item">
+            <strong>{{ i.symbol }}</strong> — {{ i.rationale }}
+            <small>{{ i.observedAt | date:'short' }}</small>
+        </div>
+        }
+    </div>
+</mat-card>
+
+<mat-card class="quote-list-card" appearance="outlined">
+    <mat-card-header>
+        <mat-card-title>📈 Quotes</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+        <ag-grid-angular [class]="themeClass" style="width: 100%; height: 400px;" [rowData]="quotes"
+            [gridOptions]="gridOptions" [components]="frameworkComponents" [pagination]="true" [animateRows]="true">
+        </ag-grid-angular>
+    </mat-card-content>
+</mat-card>

@@ -1,0 +1,58 @@
+.quote-list-card {
+    margin-bottom: 1rem;
+}
+
+.card {
+  margin-bottom: 1rem;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.half-card {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 4px;
+  padding: 5px 5px;
+}
+
+.muted {
+  opacity: 0.7;
+  margin-left: 6px;
+}
+
+.list div,
+.insight-item {
+  padding: 4px 10px;
+  margin-bottom: 1rem;
+}
+
+.up {
+  color: #2ecc71;
+  font-weight: bold;
+}
+
+.down {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.sentiment-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  padding: 10px 10px;
+}
+
+.insight-item small {
+  display: block;
+  opacity: 0.6;
+  font-size: 12px;
+}

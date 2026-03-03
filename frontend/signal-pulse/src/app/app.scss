@@ -1,3 +1,12 @@
 .main {
     padding: 16px;
 }
+
+.quotes-card {
+    margin: 24px auto;
+    padding: 16px;
+    //max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}

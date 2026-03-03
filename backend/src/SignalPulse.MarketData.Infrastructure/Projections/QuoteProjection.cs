@@ -13,11 +13,15 @@ public class QuoteProjection : SingleStreamProjection<QuoteReadModel, Guid>
             quote.Id = evt.AggregateId;
             quote.Symbol = evt.Symbol;
             quote.Price = evt.Price;
+            quote.ChangePercent = evt.ChangePercent;
+            quote.Timestamp = evt.OccurredAt.UtcDateTime;
         });
         ProjectEvent<QuoteUpdated>((quote, evt) =>
         {
             quote.Symbol = evt.Symbol;
             quote.Price = evt.Price;
+            quote.ChangePercent = evt.ChangePercent;
+            quote.Timestamp = evt.OccurredAt.UtcDateTime;
         });
     }
 }

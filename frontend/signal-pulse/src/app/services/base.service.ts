@@ -3,5 +3,5 @@ import { environment } from "../../environments/development";
 
 @Injectable({providedIn: 'root'})
 export class BaseService {
-    apiUrl = environment.apiBaseUrl;
+    apiUrl = environment.apiBase;
 }

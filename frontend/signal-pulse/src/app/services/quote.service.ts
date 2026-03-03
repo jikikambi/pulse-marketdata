@@ -15,7 +15,21 @@ export class QuoteService extends BaseService {
         super();
     }
 
+    loadQuotes() {
+
+        this.http.get<QuoteCreatedPayload[]>(`${this.apiUrl}/signalpulse/quotes`).subscribe({
+            
+            next: quotes => this.quotes.set(quotes),
+
+            error: err => {
+                
+                console.error('[QuoteService] Failed to load quotes', err);
+                this.quotes.set([]);
+            }
+        });
+    }
+
     // --- API methods ---
 
     getQuotes = () => this.http.get<QuoteCreatedPayload[]>(`${this.apiUrl}/signalpulse/quotes`);
-}
+} 

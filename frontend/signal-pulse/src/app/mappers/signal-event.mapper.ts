@@ -13,7 +13,8 @@ export function mapSignalREvent(evt: SignalREventEnvelope): SignalREventEnvelope
                 id: p.id,
                 symbol: p.symbol,
                 price: p.price,
-                timestamp: p.timestamp
+                timestamp: p.timestamp,
+                changePercent: p.changePercent
             };
 
             return { ...evt, payload };
@@ -25,7 +26,8 @@ export function mapSignalREvent(evt: SignalREventEnvelope): SignalREventEnvelope
                 id: p.id,
                 symbol: p.symbol,
                 price: p.price,
-                timestamp: p.timestamp
+                timestamp: p.timestamp,
+                changePercent: p.changePercent
             };
 
             return { ...evt, payload };
@@ -41,7 +43,7 @@ export function mapSignalREvent(evt: SignalREventEnvelope): SignalREventEnvelope
                 direction: p.direction,
                 volatility: p.volatility,
                 rationale: p.rationale,
-                timestamp: p.timestamp
+                observedAt: p.timestamp
             };
 
             return { ...evt, payload };

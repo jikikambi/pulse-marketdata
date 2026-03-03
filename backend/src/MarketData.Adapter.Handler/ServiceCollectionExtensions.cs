@@ -2,6 +2,8 @@
 using MarketData.Adapter.Shared.Mappers;
 using MarketData.Adapter.Shared.Options;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Infrastructure.Persistence;
+using SignalPulse.MarketData.Infrastructure.ReadModels;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MarketData.Adapter.Handler;
@@ -11,12 +13,29 @@ public static class ServiceCollectionExtensions
 {
     public static void SignalREndpoint(this WebApplication app)
     {
-        app.MapGet("/config", (IConfiguration configuration) => 
+        app.MapGet("/config", (IConfiguration configuration) =>
         {
             return Results.Json(new
             {
                 signalRHubUrl = configuration.GetValue<string>("SignalR:BaseUrl")
-            });            
+            });
+        });
+    }
+
+    public static void MapMinimalApis(this WebApplication app)
+    {
+        var grp = app.MapGroup("api/signalpulse");
+
+        grp.MapGet("/quotes", async (IReadModelRepository<QuoteReadModel> repo ,CancellationToken ct) => 
+        {
+            var quotes = await repo.GetAllAsync(ct);
+            return Results.Ok(quotes);
+        });
+
+        grp.MapGet("/insights", async (IReadModelRepository<QuoteInsightReadModel> repo, CancellationToken ct) =>
+        {
+            var insights = await repo.GetAllAsync(ct);
+            return Results.Ok(insights);
         });
     }
 
@@ -31,4 +50,4 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAlphaVantageQuoteMapper, AlphaVantageQuoteMapper>();
         services.AddSingleton<IAlphaVantageFallbackService, AlphaVantageFallbackService>();
     }
-}
+} 

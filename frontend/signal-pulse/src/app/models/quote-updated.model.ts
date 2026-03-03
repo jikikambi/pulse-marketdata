@@ -3,4 +3,5 @@ export interface QuoteUpdatedPayload {
     symbol: string;
     price: number;
     timestamp: string;
+    changePercent:number;
 }

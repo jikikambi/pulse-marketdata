@@ -34,13 +34,13 @@ IReadModelRepository<QuoteInsightReadModel> insightsRepo) : AggregateCommandHand
 
         if (quote is null)
         {
-            quote = QuoteAggregate.Create(quoteRdm.Symbol, quoteRdm.Price);
+            quote = QuoteAggregate.Create(quoteRdm.Symbol, quoteRdm.Price, quoteRdm.ChangePercent);
         }
         else
         {
             if (quote.Price != quoteRdm.Price || quote.Symbol != quoteRdm.Symbol)
             {
-                quote.Update(quoteRdm.Symbol, quoteRdm.Price);
+                quote.Update(quoteRdm.Symbol, quoteRdm.Price, quoteRdm.ChangePercent);
             }
         }
 
@@ -60,7 +60,7 @@ IReadModelRepository<QuoteInsightReadModel> insightsRepo) : AggregateCommandHand
             Direction = insight.Direction,
             Volatility = insight.Volatility,
             Rationale = insight.Rationale,
-            ObservedAt = DateTimeOffset.UtcNow
+            ObservedAt = quoteRdm.ObservedAtUtc
         };
 
         await _insightsRepo.UpsertAsync(read, ct);
