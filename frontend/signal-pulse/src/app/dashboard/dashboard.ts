@@ -5,7 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { AgGridAngular } from 'ag-grid-angular';
 import { AIInsightPayload } from '../models/ai-insights.model';
-import { QuoteCreatedPayload } from '../models/quote-created.model';
+import { QuotePayload } from '../models/quote-payload.model';
 import { AllCommunityModule, GridApi, GridOptions, GridReadyEvent, ModuleRegistry } from 'ag-grid-community';
 import { AgGridQuoteSettings } from './ag-grid-quote-settings';
 import { SpSignalrSyncService } from '../services/spulse-signalr-sync.service';
@@ -38,7 +38,7 @@ export class Dashboard {
   themeClass = 'ag-theme-material';
 
   // Derived dashboard data getters
-  get hotStocks() {    
+  get hotStocks() {
     return this.computeDashboardData().hotStocks;
   }
 
@@ -64,14 +64,13 @@ export class Dashboard {
 
     effect(() => {
 
-    const quotes = this.quotes(); 
+      const quotes = this.quotes();
 
-    if (this.gridApi && quotes.length) {
+      if (this.gridApi && quotes.length) {
 
-      this.gridApi.setGridOption('rowData', this.quotes());
-    }
-  });
-
+        this.gridApi.setGridOption('rowData', this.quotes());
+      }
+    });
   }
 
   setUpGrid() {
@@ -153,7 +152,7 @@ export class Dashboard {
     }
   }
 
-  private computeHotScore(symbol: string, quotes: QuoteCreatedPayload[], insights: AIInsightPayload[]): number {
+  private computeHotScore(symbol: string, quotes: QuotePayload[], insights: AIInsightPayload[]): number {
 
     const q = quotes.find(x => x.symbol === symbol);
 

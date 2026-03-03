@@ -1,7 +1,7 @@
-export interface QuoteUpdatedPayload {
+export interface QuotePayload  {
     id: string;
     symbol: string;
     price: number;
+    changePercent: number;
     timestamp: string;
-    changePercent:number;
 }

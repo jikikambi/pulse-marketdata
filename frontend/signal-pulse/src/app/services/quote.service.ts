@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { inject, Injectable, signal } from "@angular/core";
-import { QuoteCreatedPayload } from "../models/quote-created.model";
+import { QuotePayload } from "../models/quote-payload.model";
 import { BaseService } from "./base.service";
 
 @Injectable({providedIn: 'root'})
@@ -9,7 +9,7 @@ export class QuoteService extends BaseService {
     private readonly http = inject(HttpClient);
 
     /** Writable signal for asset list */
-    readonly quotes = signal<QuoteCreatedPayload[]>([]);
+    readonly quotes = signal<QuotePayload[]>([]);
 
     constructor() {
         super();
@@ -17,7 +17,7 @@ export class QuoteService extends BaseService {
 
     loadQuotes() {
 
-        this.http.get<QuoteCreatedPayload[]>(`${this.apiUrl}/signalpulse/quotes`).subscribe({
+        this.http.get<QuotePayload[]>(`${this.apiUrl}/signalpulse/quotes`).subscribe({
             
             next: quotes => this.quotes.set(quotes),
 
@@ -31,5 +31,5 @@ export class QuoteService extends BaseService {
 
     // --- API methods ---
 
-    getQuotes = () => this.http.get<QuoteCreatedPayload[]>(`${this.apiUrl}/signalpulse/quotes`);
+    getQuotes = () => this.http.get<QuotePayload[]>(`${this.apiUrl}/signalpulse/quotes`);
 } 

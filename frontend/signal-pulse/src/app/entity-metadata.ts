@@ -1,5 +1,5 @@
 import { EntityDataModuleConfig, EntityMetadataMap } from "@ngrx/data";
-import { QuoteCreatedPayload } from "./models/quote-created.model";
+import { QuotePayload } from "./models/quote-payload.model";
 import { CustomDataServiceConfig } from "./services/provide-custom-data-services";
 import { QuoteDataService } from "./services/quote-data.service";
 import { AIInsightPayload } from "./models/ai-insights.model";
@@ -7,7 +7,7 @@ import { AIInsightDataService } from "./services/aiinsight-data.service";
 
 export const entityMetadata: EntityMetadataMap = {
 
-    Quote: { selectId: (q: QuoteCreatedPayload) => q.id },
+    Quote: { selectId: (q: QuotePayload) => q.id },
     AIInsight: { selectId: (ai: AIInsightPayload) => ai.id }
 }
 

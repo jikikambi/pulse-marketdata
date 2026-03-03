@@ -1,18 +1,18 @@
 import { Injectable } from "@angular/core";
 import { DefaultDataService, HttpUrlGenerator } from "@ngrx/data";
-import { QuoteCreatedPayload } from "../models/quote-created.model";
+import { QuotePayload } from "../models/quote-payload.model";
 import { QuoteService } from "./quote.service";
 import { Observable } from "rxjs";
 
 @Injectable()
-export class QuoteDataService extends DefaultDataService<QuoteCreatedPayload> {
+export class QuoteDataService extends DefaultDataService<QuotePayload> {
 
     constructor(private svc: QuoteService, httpUrlGenerator: HttpUrlGenerator) {
 
         super('quote', svc['http'], httpUrlGenerator);
     }
 
-    override getAll(): Observable<QuoteCreatedPayload[]> {
+    override getAll(): Observable<QuotePayload[]> {
 
         return this.svc.getQuotes();
     }

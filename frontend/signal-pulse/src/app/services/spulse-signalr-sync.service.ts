@@ -2,7 +2,7 @@ import { effect, inject, Injectable } from "@angular/core";
 import { toSignal } from '@angular/core/rxjs-interop';
 import { SpSignalrService } from "./spulse-signalr.service";
 import { EntityCollectionServiceFactory } from "@ngrx/data";
-import { QuoteCreatedPayload } from "../models/quote-created.model";
+import { QuotePayload } from "../models/quote-payload.model";
 import { buildSignalREventHandlers } from "./helper/signalr-event-handlers";
 import { ConfigService } from "./config.service";
 import { AIInsightPayload } from "../models/ai-insights.model";
@@ -12,7 +12,7 @@ export class SpSignalrSyncService {
 
     private readonly ecf = inject(EntityCollectionServiceFactory);
 
-    private readonly quoteSvc = this.ecf.create<QuoteCreatedPayload>('Quote');
+    private readonly quoteSvc = this.ecf.create<QuotePayload>('Quote');
     private readonly insightSvc = this.ecf.create<AIInsightPayload>('AIInsight');
 
     private readonly cfgSvc = inject(ConfigService);
@@ -20,8 +20,8 @@ export class SpSignalrSyncService {
     private readonly signalr = inject(SpSignalrService);
 
     /** Live NgRx-backed projection */
-    readonly quoteSig = toSignal(this.quoteSvc.entities$, { initialValue: [] as QuoteCreatedPayload[] });
-    
+    readonly quoteSig = toSignal(this.quoteSvc.entities$, { initialValue: [] as QuotePayload[] });
+
     readonly aiInsightSig = toSignal(this.insightSvc.entities$, { initialValue: [] as AIInsightPayload[] });
 
     constructor() {

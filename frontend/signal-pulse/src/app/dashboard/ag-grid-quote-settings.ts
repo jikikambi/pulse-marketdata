@@ -1,9 +1,9 @@
 import { ColDef } from "ag-grid-community";
-import { QuoteCreatedPayload } from "../models/quote-created.model";
+import { QuotePayload } from "../models/quote-payload.model";
 
 export class AgGridQuoteSettings {
 
-    columnDefs: ColDef<QuoteCreatedPayload>[] = [];
+    columnDefs: ColDef<QuotePayload>[] = [];
 
     constructor() {
 
