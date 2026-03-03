@@ -65,8 +65,10 @@ export class App {
       next: quotes => {
 
         console.log(quotes)
-        this.quoteSvc.addAllToCache(quotes);
-        this.quotes.set(quotes);
+        // this.quoteSvc.addAllToCache(quotes);
+        // this.quotes.set(quotes);
+        this.quoteSvc.addAllToCache([...quotes]); // NEW array instance
+        this.quotes.set([...quotes]); 
       },
 
       error: err => console.log('[App] Failed to fetch quotes:', err)
@@ -82,8 +84,10 @@ export class App {
       next: insights => {
 
         console.log(insights)
-        this.aiInsightSvc.addAllToCache(insights);
-        this.aiInsight.set(insights);
+        // this.aiInsightSvc.addAllToCache(insights);
+        // this.aiInsight.set(insights);
+        this.aiInsightSvc.addAllToCache([...insights]);
+        this.aiInsight.set([...insights]);
       },
 
       error: err => console.log('[App] Failed to fetch ai-insights:', err)

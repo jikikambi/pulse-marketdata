@@ -6,7 +6,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { AgGridAngular } from 'ag-grid-angular';
 import { AIInsightPayload } from '../models/ai-insights.model';
 import { QuoteCreatedPayload } from '../models/quote-created.model';
-import { AllCommunityModule, GridOptions, ModuleRegistry } from 'ag-grid-community';
+import { AllCommunityModule, GridApi, GridOptions, GridReadyEvent, ModuleRegistry } from 'ag-grid-community';
 import { AgGridQuoteSettings } from './ag-grid-quote-settings';
 import { SentimentSummary } from '../models/sentiment-summary.model';
 
@@ -26,7 +26,9 @@ export class Dashboard implements OnInit, OnChanges {
   @Input() quotes: QuoteCreatedPayload[] = [];
   @Input() insights: AIInsightPayload[] = [];
 
-  gridOptions!: GridOptions;
+  private gridApi!: GridApi<any>;
+
+  gridOptions!: GridOptions<any>;
   frameworkComponents: any;
   agGridQuoteSettings!: AgGridQuoteSettings;
   themeClass: string = 'ag-theme-material';
@@ -49,9 +51,13 @@ export class Dashboard implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+
+    if (!this.gridApi) return; //prevent early calls before grid ready
     
     if (changes['quotes'] || changes['insights']) {
       this.buildDashboardData();
+
+      this.gridApi.setGridOption('rowData', this.quotes);
     }
   }
 
@@ -65,10 +71,21 @@ export class Dashboard implements OnInit, OnChanges {
       pagination: true,
       animateRows: true,
       defaultColDef: { resizable: true, sortable: true, filter: true },
+
+      onGridReady: (event) => this.onGridReady(event),
+
       context: { componentParent: this }
     };
 
     this.frameworkComponents = {};
+  }
+
+  onGridReady(event: GridReadyEvent<any>) {
+
+    this.gridApi = event.api;
+
+     // Load initial data
+    this.gridApi.setGridOption('rowData', this.quotes);
   }
 
   buildDashboardData() {
