@@ -49,6 +49,7 @@ export class Dashboard implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    
     if (changes['quotes'] || changes['insights']) {
       this.buildDashboardData();
     }
