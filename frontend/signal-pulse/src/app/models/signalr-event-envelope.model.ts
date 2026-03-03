@@ -1,4 +1,4 @@
-import { SignalREventHandlerMap } from "../services/helper/signalr-event-handlers";
+import { SignalREventHandlerMap } from "../services/helper/signalr-event-handler-map";
 
 export interface SignalREventEnvelope<T = any> {
     eventId: string;

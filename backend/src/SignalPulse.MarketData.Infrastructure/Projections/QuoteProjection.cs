@@ -18,6 +18,7 @@ public class QuoteProjection : SingleStreamProjection<QuoteReadModel, Guid>
         });
         ProjectEvent<QuoteUpdated>((quote, evt) =>
         {
+            quote.Id = evt.AggregateId;
             quote.Symbol = evt.Symbol;
             quote.Price = evt.Price;
             quote.ChangePercent = evt.ChangePercent;

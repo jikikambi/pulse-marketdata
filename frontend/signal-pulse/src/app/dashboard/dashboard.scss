@@ -1,37 +1,56 @@
-.quote-list-card {
-    margin-bottom: 1rem;
-}
-
 .card {
   margin-bottom: 1rem;
-}
-
-.row {
-  display: flex;
-  gap: 16px;
+  padding: 16px;
+  border-radius: 12px;
 }
 
 .half-card {
   flex: 1;
-  margin-bottom: 1rem;
-}
-
-.item {
+  margin: 0 0.5rem 1rem 0.5rem;
   display: flex;
-  justify-content: space-between;
-  margin: 4px 4px;
-  padding: 5px 5px;
+  flex-direction: column;
 }
 
-.muted {
-  opacity: 0.7;
-  margin-left: 6px;
+.row-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.list div,
-.insight-item {
-  padding: 4px 10px;
-  margin-bottom: 1rem;
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 90px 1fr 80px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.symbol {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.score {
+  display: flex;
+  gap: 6px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.change {
+  text-align: right;
+  font-weight: 600;
 }
 
 .up {
@@ -44,15 +63,37 @@
   font-weight: bold;
 }
 
-.sentiment-row {
+.item {
   display: flex;
   justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+}
+
+.sentiment-row {
+  display: flex;
+  justify-content: space-around;
   font-weight: 600;
-  padding: 10px 10px;
+  padding: 10px 0;
+}
+
+.insight-item {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #fafafa;
 }
 
 .insight-item small {
   display: block;
   opacity: 0.6;
   font-size: 12px;
+}
+
+.hot-card {
+  padding: 16px 20px;
+}
+
+.quote-list-card {
+  margin-bottom: 1rem;
 }

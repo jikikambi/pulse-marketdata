@@ -23,7 +23,7 @@ export class SpSignalrService {
 
     private readonly eventsToSubscribe = [
         'quote.created',
-        //'quote.updated',
+        'quote.updated',
         'quote.ai.insight'
     ];
 
@@ -52,7 +52,6 @@ export class SpSignalrService {
     attachHandlers = () => {
 
         for (const evtType of this.eventsToSubscribe) {
-            //this.hub!.on(evtType, evt => this.handleEvent({ ...evt, type: evtType } as SignalREvent))
             this.hub!.on(evtType, evt => this.handleEvent(mapSignalREvent({ ...evt, type: evtType } as SignalREventEnvelope)));
         }
     }
