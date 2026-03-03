@@ -23,9 +23,6 @@ export class App {
 
   protected readonly title = signal('Signal Pulse');
 
-  readonly quotes = signal<QuoteCreatedPayload[]>([]);
-  readonly aiInsight = signal<AIInsightPayload[]>([]);
-
   private readonly svcFactory = inject(EntityCollectionServiceFactory);
 
   private readonly quoteSvc: EntityCollectionService<QuoteCreatedPayload> = this.svcFactory.create<QuoteCreatedPayload>('Quote');
@@ -39,18 +36,6 @@ export class App {
 
   constructor() {
 
-    // 1️. Initialize NgRx data -> signal binding 
-    const quotes$ = this.quoteSvc.entities$;
-    const allQuotesSignal = toSignal(quotes$, { initialValue: [] as QuoteCreatedPayload[] });
-
-    const aiInsights$ = this.aiInsightSvc.entities$;
-    const allAIInsightSignal = toSignal(aiInsights$, { initialValue: [] as AIInsightPayload[] });
-
-    // 2. Keep NgRx cache and local signal in sync
-    effect(() => this.quotes.set(allQuotesSignal()));
-
-    effect(() => this.aiInsight.set(allAIInsightSignal()));
-
     this.loadQuotes();
 
     this.loadAIInsights();
@@ -63,12 +48,8 @@ export class App {
     this.quoteDataSvc.getAll().subscribe({
 
       next: quotes => {
-
-        console.log(quotes)
-        // this.quoteSvc.addAllToCache(quotes);
-        // this.quotes.set(quotes);
-        this.quoteSvc.addAllToCache([...quotes]); // NEW array instance
-        this.quotes.set([...quotes]); 
+       
+        this.quoteSvc.addAllToCache([...quotes]);
       },
 
       error: err => console.log('[App] Failed to fetch quotes:', err)
@@ -82,15 +63,11 @@ export class App {
     this.aiInsightDataSvc.getAll().subscribe({
 
       next: insights => {
-
-        console.log(insights)
-        // this.aiInsightSvc.addAllToCache(insights);
-        // this.aiInsight.set(insights);
+        
         this.aiInsightSvc.addAllToCache([...insights]);
-        this.aiInsight.set([...insights]);
       },
 
-      error: err => console.log('[App] Failed to fetch ai-insights:', err)
+      error: err => console.log('[App] Failed to fetch AI insights:', err)
     });
   }
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, effect, inject, ViewEncapsulation } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -8,7 +8,7 @@ import { AIInsightPayload } from '../models/ai-insights.model';
 import { QuoteCreatedPayload } from '../models/quote-created.model';
 import { AllCommunityModule, GridApi, GridOptions, GridReadyEvent, ModuleRegistry } from 'ag-grid-community';
 import { AgGridQuoteSettings } from './ag-grid-quote-settings';
-import { SentimentSummary } from '../models/sentiment-summary.model';
+import { SpSignalrSyncService } from '../services/spulse-signalr-sync.service';
 
 // Register AG Grid modules ONCE (outside component)
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -21,44 +21,57 @@ ModuleRegistry.registerModules([AllCommunityModule]);
   styleUrls: ['./dashboard.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class Dashboard implements OnInit, OnChanges {
+export class Dashboard {
 
-  @Input() quotes: QuoteCreatedPayload[] = [];
-  @Input() insights: AIInsightPayload[] = [];
+  private readonly sync = inject(SpSignalrSyncService);
+
+  readonly quotes = this.sync.quoteSig;
+
+  readonly insights = this.sync.aiInsightSig;
 
   private gridApi!: GridApi<any>;
 
   gridOptions!: GridOptions<any>;
+
   frameworkComponents: any;
   agGridQuoteSettings!: AgGridQuoteSettings;
-  themeClass: string = 'ag-theme-material';
+  themeClass = 'ag-theme-material';
 
-  // Derived Dashboard Data
-  hotStocks: any[] = [];
-  winners: any[] = [];
-  losers: any[] = [];
-  insightFeed: any[] = [];
-
-  sentimentSummary: SentimentSummary = {
-  bullish: 0,
-  neutral: 0,
-  bearish: 0
-};
-
-  ngOnInit(): void {
-
-    this.setUpGrid();
+  // Derived dashboard data getters
+  get hotStocks() {    
+    return this.computeDashboardData().hotStocks;
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  get winners() {
+    return this.computeDashboardData().winners;
+  }
 
-    if (!this.gridApi) return; //prevent early calls before grid ready
-    
-    if (changes['quotes'] || changes['insights']) {
-      this.buildDashboardData();
+  get losers() {
+    return this.computeDashboardData().losers;
+  }
 
-      this.gridApi.setGridOption('rowData', this.quotes);
+  get insightFeed() {
+    return this.computeDashboardData().insightFeed;
+  }
+
+  get sentimentSummary() {
+    return this.computeDashboardData().sentimentSummary;
+  }
+
+  constructor() {
+
+    this.setUpGrid();
+
+    effect(() => {
+
+    const quotes = this.quotes(); 
+
+    if (this.gridApi && quotes.length) {
+
+      this.gridApi.setGridOption('rowData', this.quotes());
     }
+  });
+
   }
 
   setUpGrid() {
@@ -66,7 +79,6 @@ export class Dashboard implements OnInit, OnChanges {
     this.agGridQuoteSettings = new AgGridQuoteSettings();
 
     this.gridOptions = {
-
       columnDefs: this.agGridQuoteSettings.columnDefs,
       pagination: true,
       animateRows: true,
@@ -74,7 +86,9 @@ export class Dashboard implements OnInit, OnChanges {
 
       onGridReady: (event) => this.onGridReady(event),
 
-      context: { componentParent: this }
+      context: { componentParent: this },
+
+      getRowId: params => params.data.id
     };
 
     this.frameworkComponents = {};
@@ -84,78 +98,79 @@ export class Dashboard implements OnInit, OnChanges {
 
     this.gridApi = event.api;
 
-     // Load initial data
-    this.gridApi.setGridOption('rowData', this.quotes);
+    this.gridApi.sizeColumnsToFit();
+
+    // Load initial grid data
+    this.gridApi.setGridOption('rowData', this.quotes());
   }
 
-  buildDashboardData() {
+  // Compute all derived dashboard data on-demand
+  private computeDashboardData() {
 
-    const merged = this.quotes.map(q => ({
+    const quotes = this.quotes();
+
+    const insights = this.insights();
+
+    const merged = quotes.map(q => ({
       ...q,
-      insight: this.insights.find(i => i.symbol === q.symbol) || null,
-      sentimentScore: this.getSentimentScore(q.symbol),
-      hotScore: this.computeHotScore(q.symbol)
+      insight: insights.find(i => i.symbol === q.symbol) || null,
+      sentimentScore: this.getSentimentScore(q.symbol, insights),
+      hotScore: this.computeHotScore(q.symbol, quotes, insights)
     }));
 
-    this.hotStocks = [...merged].sort((a, b) => b.hotScore - a.hotScore)
-      .slice(0, 10);
+    return {
 
-    this.winners = [...merged].filter(x => x.changePercent > 0)
-      .sort((a, b) => b.changePercent - a.changePercent)
-      .slice(0, 5);
+      hotStocks: [...merged].sort((a, b) => b.hotScore - a.hotScore).slice(0, 10),
 
-    this.losers = [...merged].filter(x => x.changePercent < 0)
-      .sort((a, b) => b.changePercent - a.changePercent)
-      .slice(0, 5);
+      winners: [...merged].filter(x => x.changePercent > 0)
+        .sort((a, b) => b.changePercent - a.changePercent)
+        .slice(0, 5),
 
-    this.sentimentSummary = {
-      bullish: this.insights.filter(i => i.sentiment === 'bullish').length,
-      neutral: this.insights.filter(i => i.sentiment === 'neutral').length,
-      bearish: this.insights.filter(i => i.sentiment === 'bearish').length
-    };  
+      losers: [...merged].filter(x => x.changePercent < 0)
+        .sort((a, b) => b.changePercent - a.changePercent)
+        .slice(0, 5),
 
-    this.insightFeed = [... this.insights]
-      .sort((a, b) => new Date(b.observedAt)
-        .getTime() - new Date(a.observedAt)
-          .getTime());
+      insightFeed: [...insights].sort((a, b) => new Date(b.observedAt).getTime() - new Date(a.observedAt).getTime()),
+
+      sentimentSummary: {
+        bullish: insights.filter(i => i.sentiment === 'bullish').length,
+        neutral: insights.filter(i => i.sentiment === 'neutral').length,
+        bearish: insights.filter(i => i.sentiment === 'bearish').length
+      }
+    };
   }
 
-  getSentimentScore(symbol: string): number {
+  private getSentimentScore(symbol: string, insights: AIInsightPayload[]): number {
 
-    const insight = this.insights.find(i => i.symbol === symbol);
+    const insight = insights.find(i => i.symbol === symbol);
 
     if (!insight) return 0;
 
-    switch (insight.sentiment.toLocaleLowerCase()) {
+    switch (insight.sentiment.toLowerCase()) {
       case 'bullish': return 2;
       case 'bearish': return -2;
       default: return 0;
     }
   }
 
-  computeHotScore(symbol: string) {
+  private computeHotScore(symbol: string, quotes: QuoteCreatedPayload[], insights: AIInsightPayload[]): number {
 
-    const q = this.quotes.find(x => x.symbol === symbol);
+    const q = quotes.find(x => x.symbol === symbol);
 
-    const insight = this.insights.find(i => i.symbol === symbol);
+    const insight = insights.find(i => i.symbol === symbol);
 
     if (!q) return 0;
 
-    const momentum = q.changePercent;                    // e.g. -0.0083 → -0.83%  
+    const momentum = q.changePercent;
 
-    const sentiment = this.getSentimentScore(symbol);   // bullish/bearish
-     
+    const sentiment = this.getSentimentScore(symbol, insights);
+
     const volatility = insight?.volatility === 'high' ? 1 : 0;
 
     const directionBonus =
       insight?.direction === 'up' ? 1 :
         insight?.direction === 'down' ? -1 : 0;
 
-    return (
-      momentum * 2 +
-      sentiment * 3 +
-      volatility * 2 +
-      directionBonus
-    );
+    return momentum * 2 + sentiment * 3 + volatility * 2 + directionBonus;
   }
 }

@@ -71,7 +71,7 @@ export function buildSignalREventHandlers(deps: SignalRHandlerServices): SignalR
                 direction: ai.direction ?? ai.direction,
                 volatility: ai.volatility ?? ai.volatility,
                 rationale: ai.rationale ?? ai.rationale,
-                timestamp: ai.observedAt ?? ai.observedAt
+                observedAt: ai.observedAt ?? ai.observedAt
             };
 
             if (!normalized.id) {

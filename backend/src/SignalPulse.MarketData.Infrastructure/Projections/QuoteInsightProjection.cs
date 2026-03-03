@@ -10,13 +10,13 @@ public class QuoteInsightProjection : SingleStreamProjection<QuoteInsightReadMod
     {
         ProjectEvent<AIInsightGenerated>((quote, evt) =>
         {
-            quote.Id = evt.QuoteId;
+            quote.Id = evt.Id;
             quote.Symbol = evt.Symbol;
             quote.Price = evt.Price;
             quote.Sentiment = evt.Sentiment;
             quote.Direction = evt.Direction;
-            quote.Rationale = evt.Rationale;
             quote.Volatility = evt.Volatility;
+            quote.Rationale = evt.Rationale;            
             quote.ObservedAt = DateTimeOffset.UtcNow;
         });
     }

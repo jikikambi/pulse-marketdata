@@ -20,7 +20,9 @@ export class SpSignalrSyncService {
     private readonly signalr = inject(SpSignalrService);
 
     /** Live NgRx-backed projection */
-    readonly quoteSig = toSignal(this.quoteSvc.entities$, { initialValue: [] as QuoteCreatedPayload[] })
+    readonly quoteSig = toSignal(this.quoteSvc.entities$, { initialValue: [] as QuoteCreatedPayload[] });
+    
+    readonly aiInsightSig = toSignal(this.insightSvc.entities$, { initialValue: [] as AIInsightPayload[] });
 
     constructor() {
 
@@ -50,7 +52,7 @@ export class SpSignalrSyncService {
 
             if (handler) handler(evt.payload);
         });
-        
+
         this.cfgSvc.load();
     }
 }
