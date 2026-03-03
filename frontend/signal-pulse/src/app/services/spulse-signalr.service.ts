@@ -23,7 +23,7 @@ export class SpSignalrService {
 
     private readonly eventsToSubscribe = [
         'quote.created',
-        'quote.updated',
+        //'quote.updated',
         'quote.ai.insight'
     ];
 

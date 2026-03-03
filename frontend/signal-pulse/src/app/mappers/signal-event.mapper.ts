@@ -20,18 +20,18 @@ export function mapSignalREvent(evt: SignalREventEnvelope): SignalREventEnvelope
             return { ...evt, payload };
         }
 
-        case 'quote.updated': {
-            const p = evt.payload;
-            const payload: QuoteUpdatedPayload = {
-                id: p.id,
-                symbol: p.symbol,
-                price: p.price,
-                timestamp: p.timestamp,
-                changePercent: p.changePercent
-            };
+        // case 'quote.updated': {
+        //     const p = evt.payload;
+        //     const payload: QuoteUpdatedPayload = {
+        //         id: p.id,
+        //         symbol: p.symbol,
+        //         price: p.price,
+        //         timestamp: p.timestamp,
+        //         changePercent: p.changePercent
+        //     };
 
-            return { ...evt, payload };
-        }
+        //     return { ...evt, payload };
+        // }
 
         case 'quote.ai.insight': {
             const p = evt.payload;
