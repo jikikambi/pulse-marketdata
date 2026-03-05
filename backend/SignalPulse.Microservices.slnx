@@ -10,7 +10,7 @@
   <Folder Name="/src/" />
   <Folder Name="/src/Adapters/" />
   <Folder Name="/src/Adapters/MarketData/">
-    <Project Path="MarketData.Adapter.Api.Client.IntegrationTests/MarketData.Adapter.Api.Client.IntegrationTests.csproj" Id="18576965-b73f-4fc4-91c7-72e865ee642d" />
+    <Project Path="src/MarketData.Adapter.Api.Client.IntegrationTests/MarketData.Adapter.Api.Client.IntegrationTests.csproj" />
     <Project Path="src/MarketData.Adapter.Api.Client.UnitTests/MarketData.Adapter.Api.Client.UnitTests.csproj" Id="a728b26e-5ab7-4a4a-85ab-549f28a9aa22" />
     <Project Path="src/MarketData.Adapter.Api.Client/MarketData.Adapter.Api.Client.csproj" Id="3dc5d042-646a-4ab2-ab60-5bbf02058782" />
     <Project Path="src/MarketData.Adapter.Api/MarketData.Adapter.Api.csproj" Id="3c59ce00-2b71-42fa-a7c1-c8884a7ae8b8" />
@@ -18,13 +18,13 @@
     <Project Path="src/MarketData.Adapter.Shared/MarketData.Adapter.Shared.csproj" Id="cb885625-81af-45c6-b143-cccb817d89f6" />
   </Folder>
   <Folder Name="/src/BuildingBlocks/">
-    <Project Path="SignalPulse.Shared.UnitTests/SignalPulse.Shared.UnitTests.csproj" Id="a4b93e8c-bdbe-4112-86c6-76e7836a4f67" />
     <Project Path="src/SignalPulse.Abstractions/SignalPulse.Abstractions.csproj" />
     <Project Path="src/SignalPulse.AI/SignalPulse.AI.csproj" Id="e9cfba2b-1dad-41da-9ef2-4c08f1ee6d46" />
     <Project Path="src/SignalPulse.Caching/SignalPulse.Caching.csproj" />
     <Project Path="src/SignalPulse.Common/SignalPulse.Common.csproj" />
     <Project Path="src/SignalPulse.Messaging/SignalPulse.Messaging.csproj" />
     <Project Path="src/SignalPulse.Persistence/SignalPulse.Persistence.csproj" />
+    <Project Path="src/SignalPulse.Shared.UnitTests/SignalPulse.Shared.UnitTests.csproj" />
   </Folder>
   <Folder Name="/src/Rdm/">
     <Project Path="src/SignalPulse.Rdm.MarketData/SignalPulse.Rdm.MarketData.csproj" Id="5cf252a1-6a94-42cb-9ff7-3445f4e890e0" />
