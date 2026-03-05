@@ -1,4 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using FluentValidation;
+using MarketData.Adapter.Shared.AlphaVantage.Request;
+using MarketData.Adapter.Shared.AlphaVantage.Response;
+using MarketData.Adapter.Shared.AlphaVantage.Services;
+using MarketData.Adapter.Shared.Validation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Refit;
 using System.Diagnostics.CodeAnalysis;
@@ -12,6 +17,8 @@ public static class ServiceCollectionExtensions
 {
     public static void AddAlphaVantageApi(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddRequestValidators();
+
         var jsonSerializerOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = null, // PascalCase is the default for System.Text.Json
@@ -29,5 +36,15 @@ public static class ServiceCollectionExtensions
 
         services.AddRefitClient<IMarketDataAdapterClient>(serializationSettings)
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseAddress));
+
+        // Register ValidatedApiClient
+        services.AddTransient<ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>>>();
+    }
+
+    public static IServiceCollection AddRequestValidators(this IServiceCollection services)
+    {
+        // Registers all validators in the assembly
+        services.AddValidatorsFromAssemblyContaining<AlphaVantageQuoteRequestValidator>();
+        return services;
     }
 }

@@ -11,6 +11,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="FluentValidation" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Client" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" />
 		<PackageReference Include="Newtonsoft.Json" />
 		<PackageReference Include="Refit" />

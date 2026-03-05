@@ -1,7 +1,9 @@
+using FluentValidation;
 using MarketData.Adapter.Api.Client;
 using MarketData.Adapter.Api.Client.Services;
 using MarketData.Adapter.Shared.AlphaVantage.Request;
 using MarketData.Adapter.Shared.AlphaVantage.Response;
+using MarketData.Adapter.Shared.AlphaVantage.Services;
 using MarketData.Adapter.Shared.Mappers;
 using MarketData.Adapter.Shared.Options;
 using MassTransit;
@@ -37,23 +39,29 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
 
     private async Task PollOnce(CancellationToken stoppingToken)
     {
+        using var scope = factory.CreateScope();
+
+        var validatedClient = scope.ServiceProvider
+            .GetRequiredService<ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>>>();
+
         foreach (var symbol in provider.Value.Symbols)
         {
-            var request = new AlphaVantageQuoteRequest
-            {
-                Function = "GLOBAL_QUOTE",
-                Symbol = symbol,
-                Apikey = provider.Value.ApiKey
-            };
+            var request = CreateRequest(symbol);
 
             ApiResponse<AlphaVantageQuoteResponse> response;
 
             try
             {
                 response = await fallbackService.TryGetOrFallbackAsync(request,
-                    () => _retryPolicy.ExecuteAsync(() => api.GetQuoteAsync(request, stoppingToken)),
+                    () => _retryPolicy.ExecuteAsync(() => validatedClient.Execute(request,
+                    (r, ct) => api.GetQuoteAsync(r, ct), stoppingToken)),
                     stoppingToken,
                     useLive: provider.Value.UseLive);
+            }
+            catch (ValidationException vex)
+            {
+                logger.LogWarning(vex, "Validation failed for {Symbol}", symbol);
+                continue; // skip to next symbol
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
@@ -68,8 +76,7 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
                 logger.LogDebug("Skipping invalid AlphaVantage quote for {Symbol}", symbol);
                 continue;
             }
-
-            using var scope = factory.CreateScope();
+                        
             var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             await publisher.Publish(message, stoppingToken);
@@ -77,6 +84,14 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
             await DelayBetweenRequests(stoppingToken);
         }
     }
+
+    private AlphaVantageQuoteRequest CreateRequest(string symbol)
+        => new()
+        {
+            Function = "GLOBAL_QUOTE",
+            Symbol = symbol,
+            Apikey = provider.Value.ApiKey
+        };
 
     private async Task DelayBetweenRequests(CancellationToken ct)
     {
