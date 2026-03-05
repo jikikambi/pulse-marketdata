@@ -14,6 +14,7 @@
     <Project Path="src/MarketData.Adapter.Api.Client.UnitTests/MarketData.Adapter.Api.Client.UnitTests.csproj" Id="a728b26e-5ab7-4a4a-85ab-549f28a9aa22" />
     <Project Path="src/MarketData.Adapter.Api.Client/MarketData.Adapter.Api.Client.csproj" Id="3dc5d042-646a-4ab2-ab60-5bbf02058782" />
     <Project Path="src/MarketData.Adapter.Api/MarketData.Adapter.Api.csproj" Id="3c59ce00-2b71-42fa-a7c1-c8884a7ae8b8" />
+    <Project Path="src/MarketData.Adapter.Handler.UnitTests/MarketData.Adapter.Handler.UnitTests.csproj" Id="bc46a1a7-92fd-47cc-85a9-acb16a2eb0d4" />
     <Project Path="src/MarketData.Adapter.Handler/MarketData.Adapter.Handler.csproj" Id="23a5377d-4359-4daf-8755-3069ac849d05" />
     <Project Path="src/MarketData.Adapter.Shared/MarketData.Adapter.Shared.csproj" Id="cb885625-81af-45c6-b143-cccb817d89f6" />
   </Folder>

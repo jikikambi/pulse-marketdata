@@ -37,7 +37,7 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
         }
     }
 
-    private async Task PollOnce(CancellationToken stoppingToken)
+    internal async Task PollOnce(CancellationToken stoppingToken)
     {
         using var scope = factory.CreateScope();
 
