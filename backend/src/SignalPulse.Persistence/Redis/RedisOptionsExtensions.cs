@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SignalPulse.Common;
 using StackExchange.Redis;
 
 namespace SignalPulse.Persistence.Redis;
@@ -9,7 +10,7 @@ public static class RedisOptionsExtensions
 {
     public static IServiceCollection AddPulseRedis(this IServiceCollection services, IConfiguration configuration)
     {
-        var redisConn = configuration.GetValue<string>("Redis:Connection") ?? "localhost:6379";
+        var redisConn = configuration.GetValue<string>("Redis:Connection") ?? SignalPulseConstants.RedisConnection;
 
         services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
 

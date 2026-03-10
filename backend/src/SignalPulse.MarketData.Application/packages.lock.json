@@ -983,6 +983,7 @@
           "MassTransit": "[9.0.1, )",
           "MassTransit.RabbitMQ": "[9.0.1, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
+          "SignalPulse.Common": "[1.0.0, )",
           "WolverineFx": "[5.12.1, )",
           "WolverineFx.RabbitMQ": "[5.12.1, )"
         }
@@ -993,6 +994,7 @@
           "Marten": "[8.18.3, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
           "SignalPulse.Abstractions": "[1.0.0, )",
+          "SignalPulse.Common": "[1.0.0, )",
           "StackExchange.Redis": "[2.10.1, )",
           "WolverineFx.Marten": "[5.12.1, )"
         }

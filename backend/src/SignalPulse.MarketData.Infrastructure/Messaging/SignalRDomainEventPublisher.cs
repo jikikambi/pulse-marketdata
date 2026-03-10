@@ -14,7 +14,7 @@ public sealed class SignalRDomainEventPublisher(IHubContext<SignalPulseHub> hubC
     {
         var sequence = await seqStore.GetNextAsync(ct).ConfigureAwait(false);
 
-        var evt = new SignalREvent(EventId: eventId, Type: eventType, Payload: payload, Timestamp: timestamp, Sequence: sequence);
+        var evt = new SignalREvent(Type: eventType, EventId: eventId,  Payload: payload, Timestamp: timestamp, Sequence: sequence);
 
         if (payload is not null && payload.GetType().GetProperty("ClientId") is not null &&
             Guid.TryParse(payload.GetType().GetProperty("ClientId")!.GetValue(payload)?.ToString(), out var clientId))

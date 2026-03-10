@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using MarketData.Adapter.Shared;
 using MarketData.Adapter.Shared.AlphaVantage.Request;
 using MarketData.Adapter.Shared.AlphaVantage.Response;
 using MarketData.Adapter.Shared.AlphaVantage.Services;
@@ -32,7 +33,7 @@ public static class ServiceCollectionExtensions
             ContentSerializer = new SystemTextJsonContentSerializer(jsonSerializerOptions)
         };
 
-        var baseAddress = configuration.GetValue<string>("AlphaVantage:BaseAddress") ?? "https://www.alphavantage.co";
+        var baseAddress = configuration.GetValue<string>("AlphaVantage:BaseAddress") ?? MarketDataConstants.AlphaVantageBaseAddress;
 
         services.AddRefitClient<IMarketDataAdapterClient>(serializationSettings)
             .ConfigureHttpClient(c => c.BaseAddress = new Uri(baseAddress));

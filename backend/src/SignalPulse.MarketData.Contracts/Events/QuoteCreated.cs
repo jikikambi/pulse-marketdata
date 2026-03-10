@@ -5,7 +5,7 @@ public record QuoteCreated(string Symbol, decimal Price, decimal ChangePercent) 
 {
     public Guid AggregateId { get; init; }
     public DateTimeOffset OccurredAt { get; init; } = DateTimeOffset.UtcNow;
-    public string EventType => "quote.created";
+    public string EventType => ContractConstants.QuoteCreatedEventType;
 
     public object Payload => new
     {

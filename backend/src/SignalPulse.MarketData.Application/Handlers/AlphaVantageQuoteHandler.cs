@@ -71,6 +71,6 @@ IReadModelRepository<QuoteInsightReadModel> insightsRepo) : AggregateCommandHand
     {
         var evt = new AIInsightGenerated(aggregateId, quote.Symbol, quote.Price, insight.Sentiment, insight.Direction, insight.Volatility, insight.Rationale, DateTimeOffset.UtcNow);
 
-        await _publisher.PublishAsync(eventType: "quote.ai.insight", eventId: insightId, payload: evt, timestamp: DateTimeOffset.UtcNow, ct);
+        await _publisher.PublishAsync(eventType: ApplicationConstants.AIInsightEventType, eventId: insightId, payload: evt, timestamp: DateTimeOffset.UtcNow, ct);
     }
 }

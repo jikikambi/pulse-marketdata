@@ -640,6 +640,9 @@
       "signalpulse.abstractions": {
         "type": "Project"
       },
+      "signalpulse.common": {
+        "type": "Project"
+      },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.0.3, )",

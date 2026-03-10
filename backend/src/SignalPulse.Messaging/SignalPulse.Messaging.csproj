@@ -8,4 +8,8 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\SignalPulse.Common\SignalPulse.Common.csproj" />
+	</ItemGroup>
+
 </Project>
