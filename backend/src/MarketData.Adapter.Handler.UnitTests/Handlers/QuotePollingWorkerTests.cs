@@ -19,7 +19,7 @@ using SignalPulse.Rdm.MarketData.AlphaVantage;
 using SignalPulse.Shared.UnitTests.Logging;
 using SignalPulse.Shared.UnitTests.Refit;
 
-namespace MarketData.Adapter.Handler.UnitTests;
+namespace MarketData.Adapter.Handler.UnitTests.Handlers;
 
 public class QuotePollingWorkerTests
 {

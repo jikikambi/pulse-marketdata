@@ -17,6 +17,7 @@ public class QuotePollingWorkerTests
     [Fact]
     public async Task PollOnce_ShouldPublishQuote_WhenApiReturnsValidQuote()
     {
+        // Arrange
         using var scope = _fixture.ServiceProvider.CreateScope();
 
         var worker = scope.ServiceProvider.GetRequiredService<QuotePollingWorker>();
