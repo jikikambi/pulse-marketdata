@@ -2,6 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { inject, Injectable, signal } from "@angular/core";
 import { QuotePayload } from "../models/quote-payload.model";
 import { BaseService } from "./base.service";
+import { API_ENDPOINTS } from "./constants";
 
 @Injectable({providedIn: 'root'})
 export class QuoteService extends BaseService {
@@ -17,7 +18,7 @@ export class QuoteService extends BaseService {
 
     loadQuotes() {
 
-        this.http.get<QuotePayload[]>(`${this.apiUrl}/signalpulse/quotes`).subscribe({
+        this.http.get<QuotePayload[]>(`${this.apiUrl}${API_ENDPOINTS.quotes}`).subscribe({
             
             next: quotes => this.quotes.set(quotes),
 
@@ -31,5 +32,5 @@ export class QuoteService extends BaseService {
 
     // --- API methods ---
 
-    getQuotes = () => this.http.get<QuotePayload[]>(`${this.apiUrl}/signalpulse/quotes`);
+    getQuotes = () => this.http.get<QuotePayload[]>(`${this.apiUrl}${API_ENDPOINTS.quotes}`);
 } 
