@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { DefaultDataService, HttpUrlGenerator } from "@ngrx/data";
 import { AIInsightPayload } from "../models/ai-insights.model";
-import { AIInsightService } from "./aiinsight.service";
+import { AIInsightService } from "./ai-insight.service";
 import { Observable } from "rxjs";
 
 @Injectable()

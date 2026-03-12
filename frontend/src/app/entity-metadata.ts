@@ -3,7 +3,7 @@ import { QuotePayload } from "./models/quote-payload.model";
 import { CustomDataServiceConfig } from "./services/provide-custom-data-services";
 import { QuoteDataService } from "./services/quote-data.service";
 import { AIInsightPayload } from "./models/ai-insights.model";
-import { AIInsightDataService } from "./services/aiinsight-data.service";
+import { AIInsightDataService } from "./services/ai-insight-data.service";
 
 export const entityMetadata: EntityMetadataMap = {
 

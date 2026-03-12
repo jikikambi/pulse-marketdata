@@ -6,8 +6,8 @@ import { EntityCollectionService, EntityCollectionServiceFactory } from '@ngrx/d
 import { QuoteService } from './services/quote.service';
 import { QuoteDataService } from './services/quote-data.service';
 import { AIInsightPayload } from './models/ai-insights.model';
-import { AIInsightService } from './services/aiinsight.service';
-import { AIInsightDataService } from './services/aiinsight-data.service';
+import { AIInsightService } from './services/ai-insight.service';
+import { AIInsightDataService } from './services/ai-insight-data.service';
 import { MatCardModule } from '@angular/material/card';
 import { Dashboard } from './dashboard/dashboard';
 

@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { API_ENDPOINTS } from './constants';
+import { QuoteService } from './quote.service';
 
 describe('QuoteService', () => {
-  let service: any;
+  let service: QuoteService;
   let httpMock: HttpTestingController;
 
   const mockQuotes = [
@@ -13,9 +14,7 @@ describe('QuoteService', () => {
   ];
 
   beforeEach(async () => {
-    const mod = await import('./quote.service');
-    const QuoteService = mod.QuoteService;
-
+    
     TestBed.configureTestingModule({
       providers: [QuoteService, provideHttpClientTesting()],
     });

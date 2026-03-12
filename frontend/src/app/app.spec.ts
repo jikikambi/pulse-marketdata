@@ -3,14 +3,13 @@ import { Component, signal } from '@angular/core';
 import { EntityCollectionServiceFactory, EntityCollectionService } from '@ngrx/data';
 import { QuoteService } from './services/quote.service';
 import { QuoteDataService } from './services/quote-data.service';
-import { AIInsightService } from './services/aiinsight.service';
-import { AIInsightDataService } from './services/aiinsight-data.service';
+import { AIInsightService } from './services/ai-insight.service';
+import { AIInsightDataService } from './services/ai-insight-data.service';
 import { SpSignalrSyncService } from './services/spulse-signalr-sync.service';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
-
 
 // MOCK Dashboard Component
 @Component({
@@ -36,10 +35,8 @@ class MockAIInsightDataService { getAll = vi.fn(() => of([])); }
 
 // MOCK SpSignalrSyncService
 class MockSpSignalrSyncService {
-  quoteSig = signal<any[]>([]);       // <--- must be callable
-  aiInsightSig = signal<any[]>([]);   // <--- must be callable
-  connect = vi.fn();
-  disconnect = vi.fn();
+  quoteSig = signal<any[]>([]);
+  aiInsightSig = signal<any[]>([]);
 }
 
 // TEST SUITE

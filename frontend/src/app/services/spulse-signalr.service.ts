@@ -1,6 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import * as SignalR from '@microsoft/signalr';
-import { mapSignalREvent } from "../mappers/signal-event.mapper";
+import { mapSignalREvent } from "../mappers/signalr-event.mapper";
 import { SignalREventEnvelope } from "../models/signalr-event-envelope.model";
 
 @Injectable({ providedIn: 'root' })
