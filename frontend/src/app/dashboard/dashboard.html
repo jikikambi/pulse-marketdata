@@ -2,7 +2,7 @@
     <mat-card-title>🔥 Hot Stocks</mat-card-title>
 
     <div class="list">
-        @for (s of hotStocks; track s.symbol) {
+        @for (s of hotStocks(); track s.symbol) {
         <div class="row">
             <div class="symbol">{{ s.symbol }}</div>
 
@@ -24,7 +24,7 @@
         <mat-card-title>🟢 Winners</mat-card-title>
 
         <div class="list">
-            @for (w of winners; track w.symbol) {
+            @for (w of winners(); track w.symbol) {
             <div class="item">
                 <strong>{{ w.symbol }}</strong>
                 <span class="up">{{ w.changePercent | number:'1.2-2' }}%</span>
@@ -37,7 +37,7 @@
         <mat-card-title>🔴 Losers</mat-card-title>
 
         <div class="list">
-            @for (l of losers; track l.symbol) {
+            @for (l of losers(); track l.symbol) {
             <div class="item">
                 <strong>{{ l.symbol }}</strong>
                 <span class="down">{{ l.changePercent | number:'1.2-2' }}%</span>
@@ -50,9 +50,9 @@
 <mat-card class="card sentiment-card" appearance="outlined">
     <mat-card-title>📊 Market Sentiment</mat-card-title>
     <div class="sentiment-row">
-        <div>Bullish: {{ sentimentSummary.bullish }}</div>
-        <div>Neutral: {{ sentimentSummary.neutral }}</div>
-        <div>Bearish: {{ sentimentSummary.bearish }}</div>
+        <div>Bullish: {{ sentimentSummary().bullish }}</div>
+        <div>Neutral: {{ sentimentSummary().neutral }}</div>
+        <div>Bearish: {{ sentimentSummary().bearish }}</div>
     </div>
 </mat-card>
 
@@ -60,7 +60,7 @@
     <mat-card-title>🧠 AI Insight Feed</mat-card-title>
 
     <div class="list">
-        @for (i of insightFeed; track i.id) {
+        @for (i of insightFeed(); track i.id) {
         <div class="insight-item">
             <strong>{{ i.symbol }}</strong> — {{ i.rationale }}
             <small>{{ i.observedAt | date:'short' }}</small>
