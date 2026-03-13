@@ -60,6 +60,11 @@ export class SpSignalrService {
 
         const now = Date.now();
 
+         if (!evt.payload || !('id' in evt.payload)) {
+        console.warn('[SignalR] Dropping event, missing id', evt);
+        return;
+    }
+
         // --- TTL eviction ---
         for (const [id, ts] of this.seen)
             if (now - ts > this.TTL_MS) this.seen.delete(id);

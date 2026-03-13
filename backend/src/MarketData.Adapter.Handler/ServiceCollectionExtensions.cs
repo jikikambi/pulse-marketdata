@@ -1,10 +1,12 @@
 ﻿using MarketData.Adapter.Api.Client.Services;
 using MarketData.Adapter.Shared.Mappers;
+using MarketData.Adapter.Shared.Middleware;
 using MarketData.Adapter.Shared.Options;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 
 namespace MarketData.Adapter.Handler;
 
@@ -26,7 +28,7 @@ public static class ServiceCollectionExtensions
     {
         var grp = app.MapGroup("api/signalpulse");
 
-        grp.MapGet("/quotes", async (IReadModelRepository<QuoteReadModel> repo ,CancellationToken ct) => 
+        grp.MapGet("/quotes", async (IReadModelRepository<QuoteReadModel> repo, CancellationToken ct) =>
         {
             var quotes = await repo.GetAllAsync(ct);
             return Results.Ok(quotes);
@@ -36,6 +38,16 @@ public static class ServiceCollectionExtensions
         {
             var insights = await repo.GetAllAsync(ct);
             return Results.Ok(insights);
+        });
+
+        grp.MapGet("/quotes/stream", async (IReadModelRepository<QuoteReadModel> repo, HttpResponse response, CancellationToken ct) =>
+        {
+            await StreamJsonArray(repo.StreamAllAsync(ct), response, ct);
+        });
+
+        grp.MapGet("/insights/stream", async (IReadModelRepository<QuoteInsightReadModel> repo, HttpResponse response, CancellationToken ct) =>
+        {
+            await StreamJsonArray(repo.StreamAllAsync(ct), response, ct);
         });
     }
 
@@ -50,4 +62,21 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAlphaVantageQuoteMapper, AlphaVantageQuoteMapper>();
         services.AddSingleton<IAlphaVantageFallbackService, AlphaVantageFallbackService>();
     }
-} 
+
+    static async Task StreamJsonArray<T>(IAsyncEnumerable<T> source, HttpResponse response, CancellationToken ct)
+    {
+        response.ContentType = "application/json";
+
+        await using var writer = new Utf8JsonWriter(response.BodyWriter);
+        writer.WriteStartArray();
+
+        await foreach (var item in source.WithCancellation(ct))
+        {
+            JsonSerializer.Serialize(writer, item);
+            await writer.FlushAsync(ct);
+        }
+
+        writer.WriteEndArray();
+        await writer.FlushAsync(ct);
+    }
+}

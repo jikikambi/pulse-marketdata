@@ -1,6 +1,7 @@
 using MarketData.Adapter.Api.Client;
 using MarketData.Adapter.Handler;
 using MarketData.Adapter.Handler.Handlers;
+using MarketData.Adapter.Shared.Middleware;
 using SignalPulse.MarketData.Application;
 using SignalPulse.MarketData.Infrastructure;
 using SignalPulse.MarketData.Infrastructure.Hubs;
@@ -42,7 +43,7 @@ builder.Services.AddMarketDataSemanticKernel(builder.Configuration);
 builder.Services.AddMarketDataMassTransitRMq(builder.Configuration);
 builder.Host.UseWolverine(opts =>
 {
-    opts.AddMarketDataWolverine(nameof(QuotePollingWorker));   
+    opts.AddMarketDataWolverine(nameof(QuotePollingWorker));
 });
 
 // --- Background Worker ---
@@ -54,6 +55,9 @@ app.UseHttpsRedirection();
 
 // --- CORS ----
 app.UseCors(CORS_POLICY);
+
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/api/signalpulse"),
+    builder => builder.UseMiddleware<RequestCancellationMiddleware>());
 
 app.MapMinimalApis();
 

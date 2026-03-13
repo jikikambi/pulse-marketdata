@@ -7,9 +7,12 @@ public class QuoteInsightRepository(IDocumentSession session) : IReadModelReposi
 {
     public async Task<QuoteInsightReadModel?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await session.Query<QuoteInsightReadModel>().FirstOrDefaultAsync(x => x.Id == id, ct);
-
+        
     public async Task<IReadOnlyList<QuoteInsightReadModel>> GetAllAsync(CancellationToken ct = default)
-        => await session.Query<QuoteInsightReadModel>().ToListAsync(ct);
+        => await StreamAllAsync(ct).ToListAsync(ct);
+
+    public IAsyncEnumerable<QuoteInsightReadModel> StreamAllAsync(CancellationToken ct)
+        => session.Query<QuoteInsightReadModel>().ToAsyncEnumerable(ct);
 
     public async Task UpsertAsync(QuoteInsightReadModel entity, CancellationToken ct = default)
     {

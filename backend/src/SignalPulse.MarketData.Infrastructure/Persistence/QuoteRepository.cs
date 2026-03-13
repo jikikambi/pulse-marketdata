@@ -9,7 +9,10 @@ public class QuoteRepository(IDocumentSession session) : IReadModelRepository<Qu
         => await session.Query<QuoteReadModel>().FirstOrDefaultAsync(x => x.Id == id, ct);
 
     public async Task<IReadOnlyList<QuoteReadModel>> GetAllAsync(CancellationToken ct = default)
-        => await session.Query<QuoteReadModel>().ToListAsync(ct);
+        => await StreamAllAsync(ct).ToListAsync(ct);
+
+    public IAsyncEnumerable<QuoteReadModel> StreamAllAsync(CancellationToken ct)
+        => session.Query<QuoteReadModel>().ToAsyncEnumerable(ct);
 
     public async Task UpsertAsync(QuoteReadModel entity, CancellationToken ct = default)
     {
