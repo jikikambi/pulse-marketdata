@@ -1,4 +1,4 @@
-<mat-card appearance="outlined" class="card hot-card">
+<mat-card id="hot-stocks" appearance="outlined" class="card hot-card">
     <mat-card-title>🔥 Hot Stocks</mat-card-title>
 
     <div class="list">
@@ -19,7 +19,7 @@
     </div>
 </mat-card>
 
-<div class="row-container">
+<div id="winners-losers" class="row-container">
     <mat-card class="half-card" appearance="outlined">
         <mat-card-title>🟢 Winners</mat-card-title>
 
@@ -47,7 +47,7 @@
     </mat-card>
 </div>
 
-<mat-card class="card sentiment-card" appearance="outlined">
+<mat-card id="sentiment" class="card sentiment-card" appearance="outlined">
     <mat-card-title>📊 Market Sentiment</mat-card-title>
     <div class="sentiment-row">
         <div>Bullish: {{ sentimentSummary().bullish }}</div>
@@ -56,7 +56,7 @@
     </div>
 </mat-card>
 
-<mat-card class="card insight-card" appearance="outlined">
+<mat-card id="insights" class="card insight-card" appearance="outlined">
     <mat-card-title>🧠 AI Insight Feed</mat-card-title>
 
     <div class="list">
@@ -69,7 +69,7 @@
     </div>
 </mat-card>
 
-<mat-card class="card quote-list-card" appearance="outlined">
+<mat-card id="quotes" class="card quote-list-card" appearance="outlined">
     <mat-card-header>
         <mat-card-title>📈 Quotes</mat-card-title>
     </mat-card-header>
@@ -80,3 +80,14 @@
         </ag-grid-angular>
     </mat-card-content>
 </mat-card>
+
+<div class="section-nav">
+
+    <div class="scroll-progress" [style.height.%]="scrollProgress"></div>
+
+    @for(s of sections; track s.id){
+    <div class="nav-dot" [class.active]="activeSection() === s.id" (click)="scrollTo(s.id)">
+        <span class="tooltip">{{ s.label }}</span>
+    </div>
+    }
+</div>

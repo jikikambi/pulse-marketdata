@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, effect, inject, OnDestroy, signal, ViewEncapsulation } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -19,7 +19,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
   styleUrls: ['./dashboard.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class Dashboard {
+export class Dashboard implements AfterViewInit, OnDestroy {
 
   private readonly store = inject(DashboardStore);
 
@@ -38,6 +38,18 @@ export class Dashboard {
   readonly insightFeed = this.store.insightFeed;
   readonly sentimentSummary = this.store.sentimentSummary;
 
+  sections = [
+    { id: 'hot-stocks', label: 'Hot Stocks' },
+    { id: 'winners-losers', label: 'Winners / Losers' },
+    { id: 'sentiment', label: 'Market Sentiment' },
+    { id: 'insights', label: 'AI Insights' },
+    { id: 'quotes', label: 'Quotes Grid' }
+  ];
+
+  activeSection = signal('hot-stocks');
+
+  scrollProgress = 0;
+
   constructor() {
 
     this.setUpGrid();
@@ -50,6 +62,57 @@ export class Dashboard {
 
         this.gridApi.setGridOption('rowData', this.quotes());
       }
+    });
+  }
+
+  ngAfterViewInit() {
+
+    if (typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+
+      entries.forEach(entry => {
+
+        if (entry.isIntersecting) {
+
+          queueMicrotask(() => {
+
+            this.activeSection.set(entry.target.id);
+          });
+        }
+      });
+    }, { threshold: 0.6 });
+
+    this.sections.forEach(s => {
+
+      const el = document.getElementById(s.id);
+
+      if (el) observer.observe(el);
+    });
+
+    window.addEventListener('scroll', this.updateScrollProgress.bind(this));
+  }
+
+  ngOnDestroy() {
+    window.removeEventListener('scroll', this.updateScrollProgress);
+  }
+
+  updateScrollProgress() {
+
+    const scrollTop = window.scrollY;
+
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+
+    this.scrollProgress = (scrollTop / height) * 100;
+
+  }
+
+  scrollTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
     });
   }
 
