@@ -85,7 +85,7 @@
 
     <div class="scroll-progress" [style.height.%]="scrollProgress"></div>
 
-    @for(s of sections; track s.id){
+    @for (s of sections; track s.id) {
     <div class="nav-dot" [class.active]="activeSection() === s.id" (click)="scrollTo(s.id)">
         <span class="tooltip">{{ s.label }}</span>
     </div>
