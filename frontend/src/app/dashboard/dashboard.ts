@@ -50,6 +50,8 @@ export class Dashboard implements AfterViewInit, OnDestroy {
 
   scrollProgress = 0;
 
+  private onScroll = this.updateScrollProgress.bind(this);
+
   constructor() {
 
     this.setUpGrid();
@@ -92,21 +94,23 @@ export class Dashboard implements AfterViewInit, OnDestroy {
       if (el) observer.observe(el);
     });
 
-    window.addEventListener('scroll', this.updateScrollProgress.bind(this));
+    window.addEventListener('scroll', this.onScroll);
   }
 
   ngOnDestroy() {
-    window.removeEventListener('scroll', this.updateScrollProgress);
+    window.removeEventListener('scroll', this.onScroll);
   }
 
   updateScrollProgress() {
 
-    const scrollTop = window.scrollY;
+    queueMicrotask(() => {
 
-    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrollTop = window.scrollY;
 
-    this.scrollProgress = (scrollTop / height) * 100;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
 
+      this.scrollProgress = (scrollTop / height) * 100;
+    });
   }
 
   scrollTo(id: string) {

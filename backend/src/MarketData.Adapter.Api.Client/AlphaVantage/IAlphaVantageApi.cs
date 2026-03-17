@@ -8,4 +8,7 @@ public interface IAlphaVantageApi
 {
     [Get("/query")]
     Task<ApiResponse<AlphaVantageQuoteResponse>> GetQuoteAsync([Query] AlphaVantageQuoteRequest quoteRequest, CancellationToken ct);
+
+    [Get("/query")]
+    Task<ApiResponse<AlphaVantageForexDailyResponse>> GetFxDailyAsync([Query] AlphaVantageForexDailyRequest quoteRequest, CancellationToken ct);
 }

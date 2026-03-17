@@ -5,6 +5,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Content Include="Prompts\ForexInsight\config.json">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
 		<Content Include="Prompts\QuoteInsight\skprompt.txt">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>

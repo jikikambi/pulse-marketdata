@@ -1,4 +1,6 @@
 ﻿using MarketData.Adapter.Api.Client.Services;
+using MarketData.Adapter.Shared.AlphaVantage.Request;
+using MarketData.Adapter.Shared.AlphaVantage.Response;
 using MarketData.Adapter.Shared.Mappers;
 using MarketData.Adapter.Shared.Middleware;
 using MarketData.Adapter.Shared.Options;
@@ -60,7 +62,9 @@ public static class ServiceCollectionExtensions
         services.Configure<PollingOptions>(configuration.GetSection("Polling"));
 
         services.AddSingleton<IAlphaVantageQuoteMapper, AlphaVantageQuoteMapper>();
-        services.AddSingleton<IAlphaVantageFallbackService, AlphaVantageFallbackService>();
+        services.AddSingleton<IAlphaVantageForexDailyMapper, AlphaVantageForexDailyMapper>();
+        services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse>, AlphaVantageQuoteFallbackService>();
+        services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageForexDailyRequest, AlphaVantageForexDailyResponse>, AlphaVantageForexFallbackService>();
     }
 
     static async Task StreamJsonArray<T>(IAsyncEnumerable<T> source, HttpResponse response, CancellationToken ct)

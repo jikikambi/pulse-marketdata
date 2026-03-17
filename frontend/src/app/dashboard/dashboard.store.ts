@@ -1,6 +1,6 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { SpSignalrSyncService } from '../services/spulse-signalr-sync.service';
-import { AIInsightPayload } from '../models/ai-insights.model';
+import { QuoteAIInsightPayload } from '../models/quote-ai-insights.model';
 import { QuotePayload } from '../models/quote-payload.model';
 
 @Injectable({ providedIn: 'root' })
@@ -58,7 +58,7 @@ export class DashboardStore {
         };
     }
 
-    private getSentimentScore(symbol: string, insights: AIInsightPayload[]): number {
+    private getSentimentScore(symbol: string, insights: QuoteAIInsightPayload[]): number {
 
         const insight = insights.find(i => i.symbol === symbol);
 
@@ -71,7 +71,7 @@ export class DashboardStore {
         }
     }
 
-    private computeHotScore(symbol: string, quotes: QuotePayload[], insights: AIInsightPayload[]): number {
+    private computeHotScore(symbol: string, quotes: QuotePayload[], insights: QuoteAIInsightPayload[]): number {
 
         const q = quotes.find(x => x.symbol === symbol);
 

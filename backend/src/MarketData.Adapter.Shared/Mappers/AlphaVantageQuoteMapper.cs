@@ -20,9 +20,9 @@ public class AlphaVantageQuoteMapper : IAlphaVantageQuoteMapper
         var culture = CultureInfo.InvariantCulture;
 
         var price = decimal.Parse(quote.Price, culture);
-        var tradingDay = DateTime.Parse(quote.LatestTradingDay, culture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+        var tradingDay = DateTimeOffset.Parse(quote.LatestTradingDay, culture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
 
-        var messageId = GuidUtility.Create(quote.Symbol, tradingDay, price, "AlphaVantage");
+        var messageId = GuidUtility.Create(quote.Symbol, tradingDay.DateTime, price, "AlphaVantage");
 
         return new AlphaVantageQuoteRdm(MessageId: messageId,
             Provider: "AlphaVantage",
@@ -38,7 +38,7 @@ public class AlphaVantageQuoteMapper : IAlphaVantageQuoteMapper
 
             Volume: long.Parse(quote.Volume, culture),
             LatestTradingDay: tradingDay,
-            ObservedAtUtc: DateTime.UtcNow);
+            ObservedAtUtc: DateTimeOffset.UtcNow);
     }
 
     private static decimal ParsePercent(string value)

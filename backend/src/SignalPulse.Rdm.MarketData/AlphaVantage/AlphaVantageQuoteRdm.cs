@@ -13,5 +13,5 @@ public record AlphaVantageQuoteRdm(Guid MessageId,
     decimal ChangePercent,
 
     long Volume,
-    DateTime LatestTradingDay,
-    DateTime ObservedAtUtc);
+    DateTimeOffset LatestTradingDay,
+    DateTimeOffset ObservedAtUtc);

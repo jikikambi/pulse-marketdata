@@ -2,12 +2,15 @@
 
 public sealed class AlphaVantageOptions
 {
-    public string ApiKey { get; init; } = default!;
-
     /// <summary>
     /// Symbols to poll (AAPL, MSFT, BTCUSD, etc.)
     /// </summary>
-    public IReadOnlyList<string> Symbols { get; init; } = [];
+    public IReadOnlyList<string> QuoteSymbols { get; init; } = [];
+
+    /// <summary>
+    /// Symbols to poll ("EUR", "USD", "GBP", "JPY", "CHF", etc.)
+    /// </summary>
+    public IReadOnlyList<(string From, string To)> ForexSymbols { get; init; } = [];
     public string BaseAddress { get; set; } = default!;
     public bool UseLive { get; set; } = true;
 }

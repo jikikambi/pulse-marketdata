@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { AIInsightService } from './ai-insight.service';
-import { AIInsightPayload } from '../models/ai-insights.model';
+import { QuoteAIInsightPayload } from '../models/quote-ai-insights.model';
 
 describe('AIInsightService', () => {
 
     let service: AIInsightService;
     let httpMock: HttpTestingController;
 
-    const mockInsights: AIInsightPayload[] = [
+    const mockInsights: QuoteAIInsightPayload[] = [
         {
             id: '1',
             symbol: 'AAPL',

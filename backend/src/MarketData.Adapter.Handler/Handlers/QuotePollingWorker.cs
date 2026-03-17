@@ -11,16 +11,18 @@ using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Retry;
 using Refit;
+using SignalPulse.AI.SemanticKernel;
 
 namespace MarketData.Adapter.Handler.Handlers;
 
 public sealed class QuotePollingWorker(IServiceScopeFactory factory,
     IMarketDataAdapterClient api,
     IOptions<AlphaVantageOptions> provider,
+    IOptions<ModelSecretsOptions> secrets,
     IOptions<PollingOptions> polling,
     IAlphaVantageQuoteMapper mapper,
     ILogger<QuotePollingWorker> logger,
-    IAlphaVantageFallbackService fallbackService) : BackgroundService
+    IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse> fallbackService) : BackgroundService
 {
     private readonly AsyncRetryPolicy<ApiResponse<AlphaVantageQuoteResponse>> _retryPolicy = Policy<ApiResponse<AlphaVantageQuoteResponse>>
             .Handle<HttpRequestException>()
@@ -44,7 +46,7 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
         var validatedClient = scope.ServiceProvider
             .GetRequiredService<ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>>>();
 
-        foreach (var symbol in provider.Value.Symbols)
+        foreach (var symbol in provider.Value.QuoteSymbols)
         {
             var request = CreateRequest(symbol);
 
@@ -90,7 +92,7 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
         {
             Function = "GLOBAL_QUOTE",
             Symbol = symbol,
-            Apikey = provider.Value.ApiKey
+            Apikey = secrets.Value.AlphaVantageApiKey
         };
 
     private async Task DelayBetweenRequests(CancellationToken ct)

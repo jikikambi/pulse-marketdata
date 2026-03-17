@@ -5,7 +5,7 @@ import { QuotePayload } from './models/quote-payload.model';
 import { EntityCollectionService, EntityCollectionServiceFactory } from '@ngrx/data';
 import { QuoteService } from './services/quote.service';
 import { QuoteDataService } from './services/quote-data.service';
-import { AIInsightPayload } from './models/ai-insights.model';
+import { QuoteAIInsightPayload } from './models/quote-ai-insights.model';
 import { AIInsightService } from './services/ai-insight.service';
 import { AIInsightDataService } from './services/ai-insight-data.service';
 import { MatCardModule } from '@angular/material/card';
@@ -25,7 +25,7 @@ export class App {
   private readonly svcFactory = inject(EntityCollectionServiceFactory);
 
   private readonly quoteSvc: EntityCollectionService<QuotePayload> = this.svcFactory.create<QuotePayload>('Quote');
-  private readonly aiInsightSvc: EntityCollectionService<AIInsightPayload> = this.svcFactory.create<AIInsightPayload>('AIInsight');
+  private readonly aiInsightSvc: EntityCollectionService<QuoteAIInsightPayload> = this.svcFactory.create<QuoteAIInsightPayload>('AIInsight');
 
   private quoteHttpSvc = inject(QuoteService);
   private aiInsightHttpSvc = inject(AIInsightService);

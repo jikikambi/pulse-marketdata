@@ -8,7 +8,7 @@ public class QuoteInsightProjection : SingleStreamProjection<QuoteInsightReadMod
 {
     public QuoteInsightProjection()
     {
-        ProjectEvent<AIInsightGenerated>((quote, evt) =>
+        ProjectEvent<QuoteAIInsightGenerated>((quote, evt) =>
         {
             quote.Id = evt.Id;
             quote.Symbol = evt.Symbol;

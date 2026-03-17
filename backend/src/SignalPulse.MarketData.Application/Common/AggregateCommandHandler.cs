@@ -13,9 +13,12 @@ public abstract class AggregateCommandHandler<TAggregate>(IAggregateRepository r
     IDomainEventPublisher publisher)
     where TAggregate : AggregateRoot, new()
 {
+    protected IAggregateRepository Repository { get; } = repo;
+    protected IDomainEventPublisher Publisher { get; } = publisher;
+
     protected async Task PersistAndPublishAsync(TAggregate aggregate, CancellationToken ct)
     {
-        var result = await repo.PersistAsync(aggregate, ct);
+        var result = await Repository.PersistAsync(aggregate, ct);
 
         if (!result.Committed) return;
 
@@ -31,10 +34,10 @@ public abstract class AggregateCommandHandler<TAggregate>(IAggregateRepository r
     {
         if (meta.Event is not ISignalREvent<object> evt) return Task.CompletedTask;
 
-        return publisher.PublishAsync(eventType: evt.EventType, eventId: meta.EventId, payload: evt.Payload, timestamp: meta.Timestamp, ct);
+        return Publisher.PublishAsync(eventType: evt.EventType, eventId: meta.EventId, payload: evt.Payload, timestamp: meta.Timestamp, ct);
     }
 
-    protected async Task<TAggregate> LoadRequiredAsync(Guid id, CancellationToken ct) => await repo.LoadAsync<TAggregate>(id, ct)
+    protected async Task<TAggregate> LoadRequiredAsync(Guid id, CancellationToken ct) => await Repository.LoadAsync<TAggregate>(id, ct)
         ?? throw new InvalidOperationException($"{typeof(TAggregate).Name} not found.");
 
     protected async Task<bool> CheckIdempotencyAsync(Guid requestId, CancellationToken ct) => await idemStore.TryMarkProcessedAsync(IdempotencyKeys.Command(requestId), ct);

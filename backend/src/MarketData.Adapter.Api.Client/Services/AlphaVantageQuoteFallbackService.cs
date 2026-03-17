@@ -10,9 +10,8 @@ using System.Globalization;
 using System.Net;
 
 namespace MarketData.Adapter.Api.Client.Services;
-
-public sealed class AlphaVantageFallbackService(ILogger<AlphaVantageFallbackService> logger,
-     IOptions<AlphaVantageSimulationOptions> simOptions) : IAlphaVantageFallbackService
+public sealed class AlphaVantageQuoteFallbackService(ILogger<AlphaVantageQuoteFallbackService> logger,
+     IOptions<AlphaVantageSimulationOptions> simOptions) : IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse>
 {
 
     private readonly Dictionary<string, AlphaVantageQuote> _seededQuotes = DataHelper

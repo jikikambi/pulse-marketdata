@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
 
         // Register ValidatedApiClient
         services.AddTransient<ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>>>();
+        services.AddTransient<ValidatedApiClient<AlphaVantageForexDailyRequest, ApiResponse<AlphaVantageForexDailyResponse>>>();
     }
 
     public static IServiceCollection AddRequestValidators(this IServiceCollection services)

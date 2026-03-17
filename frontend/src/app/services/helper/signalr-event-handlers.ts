@@ -1,11 +1,15 @@
 import { EntityCollectionService } from '@ngrx/data';
-import { AIInsightPayload } from '../../models/ai-insights.model';
+import { QuoteAIInsightPayload } from '../../models/quote-ai-insights.model';
 import { QuotePayload } from '../../models/quote-payload.model';
 import { SignalREventHandlerMap } from './signalr-event-handler-map';
+import { ForexAIInsightPayload } from '../../models/forex-ai-insights.model';
+import { ForexPayload } from '../../models/forex-payload.model';
 
 export interface SignalRHandlerServices {
     quoteSvc: EntityCollectionService<QuotePayload>;
-    insightSvc: EntityCollectionService<AIInsightPayload>;
+    quoteInsightSvc: EntityCollectionService<QuoteAIInsightPayload>;
+    forexSvc: EntityCollectionService<ForexPayload>;
+    forexAiInsightSvc: EntityCollectionService<ForexAIInsightPayload>;
 }
 
 export interface QuoteDeps {
@@ -22,6 +26,9 @@ export function buildSignalREventHandlers(deps: SignalRHandlerServices): SignalR
 
         'quote.created': (p: QuotePayload) => { deps.quoteSvc.upsertOneInCache({ ...p }); },
         'quote.updated': (p: QuotePayload) => { deps.quoteSvc.upsertOneInCache({ ...p }); },
-        'quote.ai.insight': (p: AIInsightPayload) => { deps.insightSvc.upsertOneInCache({ ...p }); }
+        'quote.ai-insight.generated': (p: QuoteAIInsightPayload) => { deps.quoteInsightSvc.upsertOneInCache({ ...p }); },
+        'forex.created': (p: ForexPayload) => { deps.forexSvc.upsertOneInCache({ ...p }); },
+        'forex.updated': (p: ForexPayload) => { deps.forexSvc.upsertOneInCache({ ...p }); },
+        'fx.ai-insight.generated': (p: ForexAIInsightPayload) => { deps.forexAiInsightSvc.upsertOneInCache({ ...p }); }
     };
 }

@@ -48,6 +48,7 @@ builder.Host.UseWolverine(opts =>
 
 // --- Background Worker ---
 builder.Services.AddHostedService<QuotePollingWorker>();
+builder.Services.AddHostedService<ForexPollingWorker>();
 
 var app = builder.Build();
 

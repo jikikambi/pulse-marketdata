@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { inject, Injectable, signal } from "@angular/core";
-import { AIInsightPayload } from "../models/ai-insights.model";
+import { QuoteAIInsightPayload } from "../models/quote-ai-insights.model";
 import { BaseService } from "./base.service";
 
 @Injectable({providedIn: 'root'})
@@ -8,7 +8,7 @@ export class AIInsightService extends BaseService {
 
     private readonly http = inject(HttpClient);
 
-    readonly aiinsight = signal<AIInsightPayload[]>([]);
+    readonly aiinsight = signal<QuoteAIInsightPayload[]>([]);
 
     constructor() {
         super();
@@ -16,7 +16,7 @@ export class AIInsightService extends BaseService {
 
     loadAIInsights() {
 
-        this.http.get<AIInsightPayload[]>(`${this.apiUrl}/signalpulse/insights`).subscribe({
+        this.http.get<QuoteAIInsightPayload[]>(`${this.apiUrl}/signalpulse/insights`).subscribe({
            
             next: insights => this.aiinsight.set(insights),
 
@@ -30,5 +30,5 @@ export class AIInsightService extends BaseService {
 
     // --- API methods --- 
     
-    getAIInsights = () => this.http.get<AIInsightPayload[]>(`${this.apiUrl}/signalpulse/insights`);
+    getAIInsights = () => this.http.get<QuoteAIInsightPayload[]>(`${this.apiUrl}/signalpulse/insights`);
 }

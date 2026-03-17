@@ -2,7 +2,7 @@
 
 namespace SignalPulse.MarketData.Application.Interfaces;
 
-public interface IAiInsightProvider
+public interface IAiInsightProvider<TInput>
 {
-    Task<AIInsightResult> GenerateAsync( string symbol, decimal price,  decimal changePercent, long volume,  CancellationToken ct = default);
+    Task<AIInsightResult> GenerateAsync(TInput input, CancellationToken ct = default);
 }

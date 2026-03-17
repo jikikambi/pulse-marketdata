@@ -1,4 +1,4 @@
-export interface AIInsightPayload {
+export interface QuoteAIInsightPayload {
     id: string;
     symbol: string;
     price: number;

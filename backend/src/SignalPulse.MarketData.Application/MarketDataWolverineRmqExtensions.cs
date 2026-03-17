@@ -11,5 +11,6 @@ public static class MarketDataWolverineRmqExtensions
         opts.Discovery.IncludeAssembly(typeof(AlphaVantageQuoteHandler).Assembly);
         opts.Policies.AutoApplyTransactions();
         opts.Services.AddScoped<AlphaVantageQuoteHandler>();
+        opts.Services.AddScoped<AlphaVantageForexHandler>();
     }
 }

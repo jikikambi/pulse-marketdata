@@ -4,21 +4,31 @@ import { buildSignalREventHandlers } from './signalr-event-handlers';
 describe('buildSignalREventHandlers', () => {
 
   let quoteSvc: any;
-  let insightSvc: any;
+  let quoteInsightSvc: any;
+  let forexSvc: any;
+  let forexAiInsightSvc: any;
 
   beforeEach(() => {
     quoteSvc = {
       upsertOneInCache: vi.fn()
     };
 
-    insightSvc = {
+    quoteInsightSvc = {
+      upsertOneInCache: vi.fn()
+    };
+
+    forexSvc = {
+      upsertOneInCache: vi.fn()
+    };
+
+    forexAiInsightSvc = {
       upsertOneInCache: vi.fn()
     };
   });
 
   it('should handle quote.created', () => {
 
-    const handlers = buildSignalREventHandlers({ quoteSvc, insightSvc });
+    const handlers = buildSignalREventHandlers({ quoteSvc, quoteInsightSvc: quoteInsightSvc, forexSvc: forexSvc, forexAiInsightSvc: forexAiInsightSvc });
 
     const payload = {
       id: '1',
@@ -36,7 +46,7 @@ describe('buildSignalREventHandlers', () => {
 
   it('should handle quote.updated', () => {
 
-    const handlers = buildSignalREventHandlers({ quoteSvc, insightSvc });
+    const handlers = buildSignalREventHandlers({ quoteSvc, quoteInsightSvc: quoteInsightSvc, forexSvc: forexSvc, forexAiInsightSvc: forexAiInsightSvc   });
 
     const payload = {
       id: '2',
@@ -52,9 +62,9 @@ describe('buildSignalREventHandlers', () => {
     expect(quoteSvc.upsertOneInCache).toHaveBeenCalledWith({ ...payload });
   });
 
-  it('should handle quote.ai.insight', () => {
+  it('should handle quote.ai-insight.generated', () => {
 
-    const handlers = buildSignalREventHandlers({ quoteSvc, insightSvc });
+    const handlers = buildSignalREventHandlers({ quoteSvc, quoteInsightSvc: quoteInsightSvc, forexSvc: forexSvc, forexAiInsightSvc: forexAiInsightSvc });
 
     const payload = {
       id: 'ai1',
@@ -67,15 +77,15 @@ describe('buildSignalREventHandlers', () => {
       observedAt: '2026-03-12T00:00:00Z'
     };
 
-    handlers['quote.ai.insight']!(payload);
+    handlers['quote.ai-insight.generated']!(payload);
 
-    expect(insightSvc.upsertOneInCache).toHaveBeenCalledTimes(1);
-    expect(insightSvc.upsertOneInCache).toHaveBeenCalledWith({ ...payload });
+    expect(quoteInsightSvc.upsertOneInCache).toHaveBeenCalledTimes(1);
+    expect(quoteInsightSvc.upsertOneInCache).toHaveBeenCalledWith({ ...payload });
   });
 
   it('should clone payload before sending to service', () => {
 
-    const handlers = buildSignalREventHandlers({ quoteSvc, insightSvc });
+    const handlers = buildSignalREventHandlers({ quoteSvc, quoteInsightSvc: quoteInsightSvc, forexSvc: forexSvc, forexAiInsightSvc: forexAiInsightSvc });
 
     const payload = {
       id: '3',

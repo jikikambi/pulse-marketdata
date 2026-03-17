@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Refit;
+using SignalPulse.AI.SemanticKernel;
 using SignalPulse.Rdm.MarketData.AlphaVantage;
 using SignalPulse.Shared.UnitTests.Logging;
 using SignalPulse.Shared.UnitTests.Refit;
@@ -29,7 +30,7 @@ public class QuotePollingWorkerTests
     private readonly IServiceProvider _provider;
     private readonly IMarketDataAdapterClient _api;
     private readonly IAlphaVantageQuoteMapper _mapper;
-    private readonly IAlphaVantageFallbackService _fallback;
+    private readonly IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse> _fallback;
     private readonly ILogger<QuotePollingWorker> _logger;
     private readonly IPublishEndpoint _publisher;
     private readonly ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>> _validatedClient;
@@ -44,7 +45,7 @@ public class QuotePollingWorkerTests
 
         _api = A.Fake<IMarketDataAdapterClient>();
         _mapper = A.Fake<IAlphaVantageQuoteMapper>();
-        _fallback = A.Fake<IAlphaVantageFallbackService>();
+        _fallback = A.Fake<IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse>>();
         _logger = A.Fake<ILogger<QuotePollingWorker>>();
         _publisher = A.Fake<IPublishEndpoint>();
 
@@ -144,9 +145,13 @@ public class QuotePollingWorkerTests
     {
         var options = Options.Create(new AlphaVantageOptions
         {
-            ApiKey = "demo",
-            Symbols = ["MSFT"],
+            QuoteSymbols = ["MSFT"],
             UseLive = true
+        });
+
+        var secrets = Options.Create(new ModelSecretsOptions
+        {
+            AlphaVantageApiKey = "test",
         });
 
         var polling = Options.Create(new PollingOptions
@@ -154,6 +159,6 @@ public class QuotePollingWorkerTests
             Interval = TimeSpan.FromMilliseconds(1)
         });
 
-        return new QuotePollingWorker(_scopeFactory, _api, options, polling, _mapper, _logger, _fallback);
+        return new QuotePollingWorker(_scopeFactory, _api, options, secrets, polling, _mapper, _logger, _fallback);
     }
 }

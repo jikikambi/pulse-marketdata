@@ -5,7 +5,9 @@ import { EntityCollectionServiceFactory } from "@ngrx/data";
 import { QuotePayload } from "../models/quote-payload.model";
 import { buildSignalREventHandlers } from "./helper/signalr-event-handlers";
 import { ConfigService } from "./config.service";
-import { AIInsightPayload } from "../models/ai-insights.model";
+import { QuoteAIInsightPayload } from "../models/quote-ai-insights.model";
+import { ForexPayload } from "../models/forex-payload.model";
+import { ForexAIInsightPayload } from "../models/forex-ai-insights.model";
 
 @Injectable({ providedIn: 'root' })
 export class SpSignalrSyncService {
@@ -13,7 +15,9 @@ export class SpSignalrSyncService {
     private readonly ecf = inject(EntityCollectionServiceFactory);
 
     private readonly quoteSvc = this.ecf.create<QuotePayload>('Quote');
-    private readonly insightSvc = this.ecf.create<AIInsightPayload>('AIInsight');
+    private readonly quoteInsightSvc = this.ecf.create<QuoteAIInsightPayload>('QuoteInsight');
+    private readonly forexSvc = this.ecf.create<ForexPayload>('Forex');
+    private readonly forexInsightSvc = this.ecf.create<ForexAIInsightPayload>('ForexInsight');
 
     private readonly cfgSvc = inject(ConfigService);
 
@@ -22,7 +26,7 @@ export class SpSignalrSyncService {
     /** Live NgRx-backed projection */
     readonly quoteSig = toSignal(this.quoteSvc.entities$, { initialValue: [] as QuotePayload[] });
 
-    readonly aiInsightSig = toSignal(this.insightSvc.entities$, { initialValue: [] as AIInsightPayload[] });
+    readonly aiInsightSig = toSignal(this.quoteInsightSvc.entities$, { initialValue: [] as QuoteAIInsightPayload[] });
 
     constructor() {
 
@@ -46,7 +50,7 @@ export class SpSignalrSyncService {
             if (!evt) return;
 
             // load mapping table from helper
-            const handlers = buildSignalREventHandlers({ quoteSvc: this.quoteSvc, insightSvc: this.insightSvc });
+            const handlers = buildSignalREventHandlers({ quoteSvc: this.quoteSvc, quoteInsightSvc: this.quoteInsightSvc, forexSvc: this.forexSvc, forexAiInsightSvc: this.forexInsightSvc  });
 
             const handler = handlers[evt.type];
 

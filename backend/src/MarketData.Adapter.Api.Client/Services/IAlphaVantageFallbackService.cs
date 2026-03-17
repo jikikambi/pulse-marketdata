@@ -4,7 +4,7 @@ using Refit;
 
 namespace MarketData.Adapter.Api.Client.Services;
 
-public interface IAlphaVantageFallbackService
+public interface IAlphaVantageFallbackService<T, R>
 {
-    Task<ApiResponse<AlphaVantageQuoteResponse>> TryGetOrFallbackAsync(AlphaVantageQuoteRequest request, Func<Task<ApiResponse<AlphaVantageQuoteResponse>>> apiCall, CancellationToken ct = default, bool useLive = false);
+    Task<ApiResponse<R>> TryGetOrFallbackAsync(T request, Func<Task<ApiResponse<R>>> apiCall, CancellationToken ct = default, bool useLive = false);
 }

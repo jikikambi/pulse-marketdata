@@ -25,4 +25,10 @@
 	  <ProjectReference Include="..\SignalPulse.Rdm.MarketData\SignalPulse.Rdm.MarketData.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="SeedData\AlphaVantage\alpha_vantage_fx.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

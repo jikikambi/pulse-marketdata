@@ -53,10 +53,10 @@ describe('mapSignalREvent', () => {
     expect(result.payload.changePercent).toBe(-0.8);
   });
 
-  it('maps quote.ai.insight payload correctly', () => {
+  it('maps quote.ai-insight.generated payload correctly', () => {
     const evt: any = {
       eventId: '3',
-      type: 'quote.ai.insight',
+      type: 'quote.ai-insight.generated',
       sequence: 3,
       timestamp: '2026-03-12T00:00:00Z',
       payload: {

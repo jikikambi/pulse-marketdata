@@ -5,8 +5,10 @@ import { EntityCollectionServiceFactory } from '@ngrx/data';
 import { SpSignalrService } from './spulse-signalr.service';
 import { ConfigService } from './config.service';
 import { QuotePayload } from '../models/quote-payload.model';
-import { AIInsightPayload } from '../models/ai-insights.model';
 import { BehaviorSubject } from 'rxjs';
+import { QuoteAIInsightPayload } from '../models/quote-ai-insights.model';
+import { ForexPayload } from '../models/forex-payload.model';
+import { ForexAIInsightPayload } from '../models/forex-ai-insights.model';
 
 // --- Mock Entity Service ---
 class MockEntityService<T> {
@@ -30,20 +32,26 @@ describe('SpSignalrSyncService', () => {
 
     let service: SpSignalrSyncService;
     let mockQuoteSvc: MockEntityService<QuotePayload>;
-    let mockInsightSvc: MockEntityService<AIInsightPayload>;
+    let mockInsightSvc: MockEntityService<QuoteAIInsightPayload>;
+    let mockForexSvc: MockEntityService<ForexPayload>;
+    let mockForexInsightSvc: MockEntityService<ForexAIInsightPayload>;
     let mockSignalr: { start: any; genEvent: WritableSignal<any | null> };
     let mockCfg: { ready: WritableSignal<boolean>; config: { signalRHubUrl: string }; load: () => Promise<void> };
 
     beforeEach(async () => {
 
         mockQuoteSvc = new MockEntityService<QuotePayload>();
-        mockInsightSvc = new MockEntityService<AIInsightPayload>();
+        mockInsightSvc = new MockEntityService<QuoteAIInsightPayload>();
+        mockForexSvc = new MockEntityService<ForexPayload>();
+        mockForexInsightSvc = new MockEntityService<ForexAIInsightPayload>();
 
         const mockFactory: Partial<EntityCollectionServiceFactory> = {
 
             create: (name: string) => {
                 if (name === 'Quote') return mockQuoteSvc as any;
-                if (name === 'AIInsight') return mockInsightSvc as any;
+                if (name === 'QuoteInsight') return mockInsightSvc as any;
+                if (name === 'Forex') return mockForexSvc as any;
+                if (name === 'ForexInsight') return mockForexInsightSvc as any;
                 throw new Error(`Unknown entity: ${name}`);
             }
         };
@@ -105,14 +113,14 @@ describe('SpSignalrSyncService', () => {
         expect(service.quoteSig()).toContainEqual(quote);
     });
 
-    it('should update insight signal when a quote.ai.insight event is emitted', async () => {
+    it('should update insight signal when a quote.ai-insight.generated event is emitted', async () => {
 
-        const insight: AIInsightPayload = {
+        const insight: QuoteAIInsightPayload = {
             id: 'ins1', symbol: 'AAPL', price: 172, sentiment: 'bullish',
             direction: 'up', volatility: 'high', rationale: 'test', observedAt: '2026-03-11T10:00:00Z'
         };
 
-        const evt = { type: 'quote.ai.insight', payload: insight, eventId: 'evt2', sequence: 1, timestamp: new Date().toISOString() };
+        const evt = { type: 'quote.ai-insight.generated', payload: insight, eventId: 'evt2', sequence: 1, timestamp: new Date().toISOString() };
 
         mockSignalr.genEvent.set(evt);
 
