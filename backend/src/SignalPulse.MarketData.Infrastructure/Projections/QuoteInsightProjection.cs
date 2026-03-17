@@ -16,7 +16,7 @@ public class QuoteInsightProjection : SingleStreamProjection<QuoteInsightReadMod
             quote.Sentiment = evt.Sentiment;
             quote.Direction = evt.Direction;
             quote.Volatility = evt.Volatility;
-            quote.Rationale = evt.Rationale;            
+            quote.Rationale = evt.Rationale;
             quote.ObservedAt = DateTimeOffset.UtcNow;
         });
     }

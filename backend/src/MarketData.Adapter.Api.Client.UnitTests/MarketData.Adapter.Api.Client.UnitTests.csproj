@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		
 		<PackageReference Include="coverlet.collector">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -12,8 +11,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\MarketData.Adapter.Shared\MarketData.Adapter.Shared.csproj" />
-	  <ProjectReference Include="..\SignalPulse.Shared.UnitTests\SignalPulse.Shared.UnitTests.csproj" />
+		<ProjectReference Include="..\MarketData.Adapter.Shared\MarketData.Adapter.Shared.csproj" />
+		<ProjectReference Include="..\SignalPulse.Shared.UnitTests\SignalPulse.Shared.UnitTests.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -37,11 +37,13 @@ public static class MarketDataMartenExtensions
             // --- Register projections ---
             opts.Projections.Add<QuoteProjection>(ProjectionLifecycle.Inline);
             opts.Projections.Add<QuoteInsightProjection>(ProjectionLifecycle.Inline);
+            opts.Projections.Add<ForexInsightProjection>(ProjectionLifecycle.Inline);
         });           
 
         // --- Repositories ---
         services.AddScoped<IReadModelRepository<QuoteReadModel>, QuoteRepository>();
         services.AddScoped<IReadModelRepository<QuoteInsightReadModel>, QuoteInsightRepository>();
+        services.AddScoped<IReadModelRepository<ForexInsightReadModel>, ForexInsightRepository>();
 
         // --- Domain infrastructure ---
         services.AddScoped<IAggregateRepository, MartenAggregateRepository>();

@@ -1,5 +1,4 @@
-﻿
-using Marten;
+﻿using Marten;
 using SignalPulse.Abstractions.Events;
 using SignalPulse.MarketData.Domain.Common;
 
@@ -46,7 +45,7 @@ public class MartenAggregateRepository(IDocumentSession session) : IAggregateRep
             // Return metadata for publishing
             return new PersistResult(true, eventMetas);
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             return new PersistResult(false, []);
         }

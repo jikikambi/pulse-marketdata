@@ -38,8 +38,11 @@ public class AggregateRoot : IAggregate
             evt.GetType().GetProperty(nameof(IDomainEvent.AggregateId))!.SetValue(evt, Id);
         }
 
+        if (evt.AggregateId != Id)
+            throw new InvalidOperationException("Event belongs to a different aggregate.");
+
         Mutate(evt);
-        _uncommittedEvents?.Add(evt);
+        _uncommittedEvents.Add(evt);
     }
 
     /// <summary>
@@ -57,7 +60,7 @@ public class AggregateRoot : IAggregate
 
             var handler = aggType.GetMethod("On", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, [evtType], null);
 
-            return handler is null ? throw new InvalidOperationException($"{aggType.Name} does not handle {evtType.GetType().Name}") : handler;
+            return handler is null ? throw new InvalidOperationException($"{aggType.Name} does not handle {evtType.Name}") : handler;
         });
 
         handler.Invoke(this, [evt]);

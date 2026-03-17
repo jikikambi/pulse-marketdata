@@ -34,9 +34,13 @@
   <Folder Name="/src/Services/" />
   <Folder Name="/src/Services/MarketData/">
     <Project Path="src/SignalPulse.MarketData.Api/SignalPulse.MarketData.Api.csproj" Id="a755a870-081f-4344-85a3-2b89ec77deff" />
+    <Project Path="src/SignalPulse.MarketData.Application.UnitTests/SignalPulse.MarketData.Application.UnitTests.csproj" Id="ce4e83d7-0979-456a-b479-a9f8cb4f8988" />
     <Project Path="src/SignalPulse.MarketData.Application/SignalPulse.MarketData.Application.csproj" Id="fa90ea4e-1d5c-4309-8d96-7883ff205938" />
     <Project Path="src/SignalPulse.MarketData.Contracts/SignalPulse.MarketData.Contracts.csproj" Id="d5cbc170-f146-4575-aa78-0b19a6e44521" />
+    <Project Path="src/SignalPulse.MarketData.Domain.UnitTests/SignalPulse.MarketData.Domain.UnitTests.csproj" Id="3995f9bc-c87a-4476-8c37-e5f6ab01870d" />
     <Project Path="src/SignalPulse.MarketData.Domain/SignalPulse.MarketData.Domain.csproj" Id="f2630ff8-eb47-43be-b98e-d829c13d098f" />
+    <Project Path="src/SignalPulse.MarketData.Infrastructure.IntegrationTests/SignalPulse.MarketData.Infrastructure.IntegrationTests.csproj" Id="2847efeb-3f13-44f2-aa60-ee1f9221aa8c" />
+    <Project Path="src/SignalPulse.MarketData.Infrastructure.UnitTests/SignalPulse.MarketData.Infrastructure.UnitTests.csproj" Id="0fd41b56-5db0-4841-a519-b00c3540eb4f" />
     <Project Path="src/SignalPulse.MarketData.Infrastructure/SignalPulse.MarketData.Infrastructure.csproj" Id="99298f6e-2d44-4612-97e0-fd8d452f6e5f" />
     <Project Path="src/SignalPulse.MarketData.Worker/SignalPulse.MarketData.Worker.csproj" Id="74cd628d-66c2-4468-8330-4749849fc775" />
   </Folder>
