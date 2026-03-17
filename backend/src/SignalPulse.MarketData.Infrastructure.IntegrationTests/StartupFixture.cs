@@ -1,10 +1,8 @@
 ﻿using JasperFx;
 using JasperFx.Events;
-using JasperFx.Events.Projections;
 using Marten;
 using SignalPulse.Abstractions.Events;
 using SignalPulse.MarketData.Contracts.Events;
-using SignalPulse.MarketData.Infrastructure.Projections;
 using Testcontainers.PostgreSql;
 
 namespace SignalPulse.MarketData.Infrastructure.IntegrationTests;
@@ -39,11 +37,7 @@ public class StartupFixture : IAsyncLifetime
                     .Where(t => typeof(IDomainEvent).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)]
             );
 
-            // Only read models — no projections registered
-            // Register projections
-            opts.Projections.Add<QuoteProjection>(ProjectionLifecycle.Inline);
-            opts.Projections.Add<QuoteInsightProjection>(ProjectionLifecycle.Inline);
-            opts.Projections.Add<ForexInsightProjection>(ProjectionLifecycle.Inline);
+            // Only read models — no projections registered            
         });
     }
 
