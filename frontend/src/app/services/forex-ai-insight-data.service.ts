@@ -5,7 +5,7 @@ import { ForexAiInsightService } from "./forex-ai-insight.service";
 import { Observable } from "rxjs";
 
 @Injectable({providedIn: 'root'})
-export class ForexAIInsightDataService extends DefaultDataService<ForexAIInsightPayload> {
+export class ForexAiInsightDataService extends DefaultDataService<ForexAIInsightPayload> {
     
     constructor(private svc: ForexAiInsightService, httpUrlGenerator: HttpUrlGenerator ) {
         super('forexInsight', svc['http'], httpUrlGenerator);

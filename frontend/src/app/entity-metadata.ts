@@ -5,7 +5,7 @@ import { QuoteDataService } from "./services/quote-data.service";
 import { QuoteAIInsightPayload } from "./models/quote-ai-insights.model";
 import { QuoteAiInsightDataService } from "./services/qoute-ai-insight-data.service";
 import { ForexAIInsightPayload } from "./models/forex-ai-insights.model";
-import { ForexAIInsightDataService } from "./services/forex-ai-insight-data.service";
+import { ForexAiInsightDataService } from "./services/forex-ai-insight-data.service";
 import { ForexPayload } from "./models/forex-payload.model";
 import { ForexDataService } from "./services/forex-data.service";
 
@@ -27,5 +27,5 @@ export const customeDataServices: CustomDataServiceConfig[] = [
     { entityName: 'Quote', dataService: QuoteDataService },
     { entityName: 'Forex', dataService: ForexDataService },
     { entityName: 'QuoteInsight', dataService: QuoteAiInsightDataService },
-    { entityName: 'ForexInsight', dataService: ForexAIInsightDataService }
+    { entityName: 'ForexInsight', dataService: ForexAiInsightDataService }
 ];
