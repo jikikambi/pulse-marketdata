@@ -3,12 +3,18 @@ import { QuotePayload } from "./models/quote-payload.model";
 import { CustomDataServiceConfig } from "./services/provide-custom-data-services";
 import { QuoteDataService } from "./services/quote-data.service";
 import { QuoteAIInsightPayload } from "./models/quote-ai-insights.model";
-import { AIInsightDataService } from "./services/ai-insight-data.service";
+import { QuoteAiInsightDataService } from "./services/qoute-ai-insight-data.service";
+import { ForexAIInsightPayload } from "./models/forex-ai-insights.model";
+import { ForexAIInsightDataService } from "./services/forex-ai-insight-data.service";
+import { ForexPayload } from "./models/forex-payload.model";
+import { ForexDataService } from "./services/forex-data.service";
 
 export const entityMetadata: EntityMetadataMap = {
 
     Quote: { selectId: (q: QuotePayload) => q.id },
-    AIInsight: { selectId: (ai: QuoteAIInsightPayload) => ai.id }
+    Forex: { selectId: (f: ForexPayload) => f.id },
+    QuoteInsight: { selectId: (ai: QuoteAIInsightPayload) => ai.id },
+    ForexInsight: { selectId: (ai: ForexAIInsightPayload) => ai.id }
 }
 
 export const entityConfig: EntityDataModuleConfig = {
@@ -19,5 +25,7 @@ export const entityConfig: EntityDataModuleConfig = {
 export const customeDataServices: CustomDataServiceConfig[] = [
 
     { entityName: 'Quote', dataService: QuoteDataService },
-    { entityName: 'AIInsight', dataService: AIInsightDataService }
+    { entityName: 'Forex', dataService: ForexDataService },
+    { entityName: 'QuoteInsight', dataService: QuoteAiInsightDataService },
+    { entityName: 'ForexInsight', dataService: ForexAIInsightDataService }
 ];

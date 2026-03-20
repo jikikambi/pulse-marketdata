@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { QuotePayload } from './models/quote-payload.model';
 import { EntityCollectionService, EntityCollectionServiceFactory } from '@ngrx/data';
 import { QuoteService } from './services/quote.service';
 import { QuoteDataService } from './services/quote-data.service';
 import { QuoteAIInsightPayload } from './models/quote-ai-insights.model';
-import { AIInsightService } from './services/ai-insight.service';
-import { AIInsightDataService } from './services/ai-insight-data.service';
+import { QuoteAiInsightService } from './services/quote-ai-insight.service';
+import { QuoteAiInsightDataService } from './services/qoute-ai-insight-data.service';
 import { MatCardModule } from '@angular/material/card';
 import { Dashboard } from './dashboard/dashboard';
 
@@ -25,13 +25,13 @@ export class App {
   private readonly svcFactory = inject(EntityCollectionServiceFactory);
 
   private readonly quoteSvc: EntityCollectionService<QuotePayload> = this.svcFactory.create<QuotePayload>('Quote');
-  private readonly aiInsightSvc: EntityCollectionService<QuoteAIInsightPayload> = this.svcFactory.create<QuoteAIInsightPayload>('AIInsight');
+  private readonly aiInsightSvc: EntityCollectionService<QuoteAIInsightPayload> = this.svcFactory.create<QuoteAIInsightPayload>('QuoteInsight');
 
   private quoteHttpSvc = inject(QuoteService);
-  private aiInsightHttpSvc = inject(AIInsightService);
+  private aiInsightHttpSvc = inject(QuoteAiInsightService);
 
   private quoteDataSvc = inject(QuoteDataService);
-  private aiInsightDataSvc = inject(AIInsightDataService);
+  private aiInsightDataSvc = inject(QuoteAiInsightDataService);
 
   constructor() {
 

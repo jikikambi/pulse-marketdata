@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { API_ENDPOINTS } from './constants';
 import { QuoteService } from './quote.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('QuoteService', () => {
   let service: QuoteService;
@@ -16,7 +17,7 @@ describe('QuoteService', () => {
   beforeEach(async () => {
     
     TestBed.configureTestingModule({
-      providers: [QuoteService, provideHttpClientTesting()],
+      providers: [QuoteService, provideHttpClient(), provideHttpClientTesting()],
     });
 
     service = TestBed.inject(QuoteService);
@@ -31,7 +32,7 @@ describe('QuoteService', () => {
 
     req.flush(mockQuotes);
 
-    expect(service.quotes()).toEqual(mockQuotes);
+    expect(service.data()).toEqual(mockQuotes);
     httpMock.verify();
   });
 
@@ -41,7 +42,7 @@ describe('QuoteService', () => {
     const req = httpMock.expectOne(`${service.apiUrl}${API_ENDPOINTS.quotes}`);
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
-    expect(service.quotes()).toEqual([]);
+    expect(service.data()).toEqual([]);
     httpMock.verify();
   });
 });

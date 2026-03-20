@@ -3,8 +3,8 @@ import { Component, signal } from '@angular/core';
 import { EntityCollectionServiceFactory, EntityCollectionService } from '@ngrx/data';
 import { QuoteService } from './services/quote.service';
 import { QuoteDataService } from './services/quote-data.service';
-import { AIInsightService } from './services/ai-insight.service';
-import { AIInsightDataService } from './services/ai-insight-data.service';
+import { QuoteAiInsightService } from './services/quote-ai-insight.service';
+import { QuoteAiInsightDataService } from './services/qoute-ai-insight-data.service';
 import { SpSignalrSyncService } from './services/spulse-signalr-sync.service';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -57,9 +57,9 @@ describe('App', () => {
       providers: [
         { provide: EntityCollectionServiceFactory, useClass: MockEntityCollectionServiceFactory },
         { provide: QuoteService, useClass: MockQuoteService },
-        { provide: AIInsightService, useClass: MockAIInsightService },
+        { provide: QuoteAiInsightService, useClass: MockAIInsightService },
         { provide: QuoteDataService, useClass: MockQuoteDataService },
-        { provide: AIInsightDataService, useClass: MockAIInsightDataService },
+        { provide: QuoteAiInsightDataService, useClass: MockAIInsightDataService },
         { provide: SpSignalrSyncService, useClass: MockSpSignalrSyncService },
       ],
     }).compileComponents();
