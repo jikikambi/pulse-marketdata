@@ -7,6 +7,6 @@ namespace SignalPulse.MarketData.Application.Handlers;
 
 public sealed class AlphaVantageQuoteConsumer(IMessageBus bus, ILogger<AlphaVantageQuoteConsumer> logger) : AlphaVantageConsumerBase<AlphaVantageQuoteRdm>(bus, logger)
 {
-    protected override void LogReceived(AlphaVantageQuoteRdm message) => 
+    protected override void LogReceived(AlphaVantageQuoteRdm message) =>
         Logger.LogInformation(" {Consumer} Received {Symbol}", nameof(AlphaVantageQuoteConsumer), message.Symbol);
 }

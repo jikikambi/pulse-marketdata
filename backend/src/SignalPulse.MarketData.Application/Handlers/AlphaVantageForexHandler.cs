@@ -37,14 +37,14 @@ public sealed class AlphaVantageForexHandler(
     {
         try
         {
-           return ForexAggregate.Create(rdm.FromSymbol, rdm.ToSymbol, rdm.Open, rdm.High, rdm.Low, rdm.Close, rdm.ForexDate);
+            return ForexAggregate.Create(rdm.FromSymbol, rdm.ToSymbol, rdm.Open, rdm.High, rdm.Low, rdm.Close, rdm.ForexDate);
         }
-        catch(InvalidForexException ex)
+        catch (InvalidForexException ex)
         {
             logger.LogError($"Invalid forex data: {ex.Message}");
             throw;
         }
-    }        
+    }
 
     protected override bool ShouldUpdate(ForexAggregate aggregate, AlphaVantageForexRdm rdm) =>
         true;
@@ -106,7 +106,7 @@ public sealed class AlphaVantageForexHandler(
             insight.Volatility,
             insight.Rationale,
             DateTimeOffset.UtcNow);
-               
+
         await Publisher.PublishAsync(
             eventType: evt.EventType,
             eventId: insightId,

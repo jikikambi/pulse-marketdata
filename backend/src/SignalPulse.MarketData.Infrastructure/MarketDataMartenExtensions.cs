@@ -22,7 +22,7 @@ public static class MarketDataMartenExtensions
         // --- Redis / Idempotency ---       
         services.AddPulseRedis(config);
         services.AddSingleton<IIdempotencyStore, RedisIdempotencyStore>();
-        services.AddScoped<IEventSequenceStore, RedisEventSequenceStore>();
+        services.AddSingleton<IEventSequenceStore, RedisEventSequenceStore>();
 
         services.AddScoped<IDomainEventPublisher, SignalRDomainEventPublisher>();
 

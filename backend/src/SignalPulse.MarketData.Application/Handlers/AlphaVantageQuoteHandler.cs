@@ -43,7 +43,7 @@ public sealed class AlphaVantageQuoteHandler(
             logger.LogError($"Invalid quote data: {ex.Message}");
             throw;
         }
-    }        
+    }
 
     protected override bool ShouldUpdate(QuoteAggregate aggregate, AlphaVantageQuoteRdm rdm) =>
         true;
@@ -59,7 +59,7 @@ public sealed class AlphaVantageQuoteHandler(
             logger.LogError($"Failed to update quote aggregate: {ex.Message}");
             throw;
         }
-    }        
+    }
 
     protected override QuoteInsightInput CreateInsightInput(QuoteAggregate aggregate, AlphaVantageQuoteRdm rdm) =>
         new(aggregate.Symbol, aggregate.Price, rdm.ChangePercent, rdm.Volume);
@@ -69,16 +69,16 @@ public sealed class AlphaVantageQuoteHandler(
         AlphaVantageQuoteRdm rdm,
         AIInsightResult insight,
         Guid insightId) => new()
-    {
-        Id = insightId,
-        Symbol = aggregate.Symbol,
-        Price = aggregate.Price,
-        Sentiment = insight.Sentiment,
-        Direction = insight.Direction,
-        Volatility = insight.Volatility,
-        Rationale = insight.Rationale,
-        ObservedAt = rdm.ObservedAtUtc
-    };
+        {
+            Id = insightId,
+            Symbol = aggregate.Symbol,
+            Price = aggregate.Price,
+            Sentiment = insight.Sentiment,
+            Direction = insight.Direction,
+            Volatility = insight.Volatility,
+            Rationale = insight.Rationale,
+            ObservedAt = rdm.ObservedAtUtc
+        };
 
     protected override async Task PublishInsightEvent(
         Guid aggregateId,
