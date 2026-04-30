@@ -14,6 +14,11 @@ public static class RedisOptionsExtensions
 
         services.Configure<IdempotencyOptions>(configuration.GetSection("Idempotency"));
 
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = redisConn;
+        });
+
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Redis");

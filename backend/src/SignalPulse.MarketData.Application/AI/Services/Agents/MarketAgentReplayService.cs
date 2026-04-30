@@ -7,25 +7,37 @@ public class MarketAgentReplayService(IAgentStateStore store)
 {
     public async Task<AgentReplayResult?> ReplayAsync(string key)
     {
-        var state = await store.GetAsync(key);
+        MarketAgentState? state;
 
-        if (state is null) return null;
-
-        var timeline = new List<string>();
-
-        foreach (var step in state.Steps.OrderBy(s => s.Timestamp).ThenBy(s => s.StepName))
+        try
         {
-            timeline.Add(
-                $"[{step.Timestamp:HH:mm:ss}] {step.StepName}\n" +
-                $"INPUT: {step.Input}\n" +
-                $"OUTPUT: {step.Output}\n"
-            );
+            state = await store.GetAsync(key);
         }
+        catch (Exception ex)
+        {
+            return new AgentReplayResult(
+                key,
+                [
+                    new(DateTimeOffset.UtcNow,"replay_error","",ex.Message)
+                ],
+                false);
+        }
+
+        if (state is null)
+            return null;
+
+        var timeline = state.Steps
+            .OrderBy(s => s.Timestamp)
+            .Select(s => new AgentStepView(
+                s.Timestamp,
+                s.StepName,
+                s.Input,
+                s.Output))
+            .ToList();
 
         return new AgentReplayResult(
             Key: key,
             Timeline: timeline,
-            Completed: state.Completed
-        );
+            Completed: state.Completed);
     }
 }

@@ -572,6 +572,7 @@
         "type": "Project",
         "dependencies": {
           "Marten": "[8.18.3, )",
+          "Microsoft.Extensions.Caching.StackExchangeRedis": "[10.0.7, )",
           "SignalPulse.Abstractions": "[1.0.0, )",
           "SignalPulse.Common": "[1.0.0, )",
           "StackExchange.Redis": "[2.10.1, )",
@@ -647,6 +648,15 @@
         "contentHash": "sYKe6PE/lTHtvnJqndbkgDKlElvGOaP+nmRa0PmU/cBW8WxEcnoqmtNOGHiDQyI1ybItL3fkfHXczquUsgIuSA==",
         "dependencies": {
           "MessagePack": "2.5.187"
+        }
+      },
+      "Microsoft.Extensions.Caching.StackExchangeRedis": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "TvD0totA8qeyrZ2YeY/qRNgYBy4BvO6dG59ziJDLVnLH4s2jeLUFEFcgA3xzqPhCMMbuz9bJTRwHxkZ/7c87jQ==",
+        "dependencies": {
+          "StackExchange.Redis": "2.7.27"
         }
       },
       "Microsoft.SemanticKernel": {
