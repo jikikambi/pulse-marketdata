@@ -28,4 +28,15 @@
 		<ProjectReference Include="..\SignalPulse.Rdm.MarketData\SignalPulse.Rdm.MarketData.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="AI\Agents\Market\" />
+	  <Folder Include="AI\Agents\Debugging\" />
+	  <Folder Include="AI\Models\" />
+	  <Folder Include="AI\Providers\" />
+	  <Folder Include="AI\Plugins\" />
+	  <Folder Include="Services\Interfaces\" />
+	  <Folder Include="Services\Caching\" />
+	  <Folder Include="Services\State\" />
+	</ItemGroup>
+
 </Project>
