@@ -1,4 +1,4 @@
-using SignalPulse.MarketData.Application.AI;
+using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Domain.Common;
 using SignalPulse.MarketData.Infrastructure.Messaging;

@@ -1,4 +1,4 @@
-﻿namespace SignalPulse.MarketData.Application.Services;
+﻿namespace SignalPulse.MarketData.Application.AI.Services.Providers;
 
 internal static class MockInsightGenerator
 {

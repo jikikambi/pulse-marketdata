@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Refit;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.Rdm.MarketData.AlphaVantage;
 using SignalPulse.Shared.UnitTests.Logging;
 using SignalPulse.Shared.UnitTests.Refit;
@@ -34,6 +35,8 @@ public class QuotePollingWorkerTests
     private readonly ILogger<QuotePollingWorker> _logger;
     private readonly IPublishEndpoint _publisher;
     private readonly ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>> _validatedClient;
+    private readonly MarketAgentReplayService _replayService;
+
 
     public QuotePollingWorkerTests()
     {
@@ -48,6 +51,7 @@ public class QuotePollingWorkerTests
         _fallback = A.Fake<IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse>>();
         _logger = A.Fake<ILogger<QuotePollingWorker>>();
         _publisher = A.Fake<IPublishEndpoint>();
+        _replayService = A.Fake<MarketAgentReplayService>();
 
         _validatedClient = A.Fake<ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>>>();
 
@@ -159,6 +163,12 @@ public class QuotePollingWorkerTests
             Interval = TimeSpan.FromMilliseconds(1)
         });
 
-        return new QuotePollingWorker(_scopeFactory, _api, options, secrets, polling, _mapper, _logger, _fallback);
+        var agentOpts = Options.Create(new AgentDebugOptions
+        {
+            Enabled = false,
+            DelayMs = 500
+        });
+
+        return new QuotePollingWorker(_scopeFactory, _api, options, secrets, polling, _mapper, _logger, _fallback, agentOpts, _replayService);
     }
 }

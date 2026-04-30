@@ -1,7 +1,7 @@
 ﻿using FakeItEasy;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using SignalPulse.MarketData.Application.AI;
+using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.Handlers;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Domain.Common;

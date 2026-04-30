@@ -2,9 +2,9 @@
 using MarketData.Adapter.Shared.AlphaVantage.Request;
 using MarketData.Adapter.Shared.AlphaVantage.Response;
 using MarketData.Adapter.Shared.Mappers;
-using MarketData.Adapter.Shared.Middleware;
 using MarketData.Adapter.Shared.Options;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
 using System.Diagnostics.CodeAnalysis;
@@ -28,26 +28,38 @@ public static class ServiceCollectionExtensions
 
     public static void MapMinimalApis(this WebApplication app)
     {
-        var grp = app.MapGroup("api/signalpulse");
+        var aiGrp = app.MapGroup("api/agent");
 
-        grp.MapGet("/quotes", async (IReadModelRepository<QuoteReadModel> repo, CancellationToken ct) =>
+        aiGrp.MapGet("/debug/{key}", async (string key, MarketAgentReplayService replayService) =>
+        {
+            var replay = await replayService.ReplayAsync(key);
+
+            if (replay is null)
+                return Results.NotFound();
+
+            return Results.Ok(replay);
+        });
+
+        var spGrp = app.MapGroup("api/signalpulse");
+
+        spGrp.MapGet("/quotes", async (IReadModelRepository<QuoteReadModel> repo, CancellationToken ct) =>
         {
             var quotes = await repo.GetAllAsync(ct);
             return Results.Ok(quotes);
         });
 
-        grp.MapGet("/insights", async (IReadModelRepository<QuoteInsightReadModel> repo, CancellationToken ct) =>
+        spGrp.MapGet("/insights", async (IReadModelRepository<QuoteInsightReadModel> repo, CancellationToken ct) =>
         {
             var insights = await repo.GetAllAsync(ct);
             return Results.Ok(insights);
         });
 
-        grp.MapGet("/quotes/stream", async (IReadModelRepository<QuoteReadModel> repo, HttpResponse response, CancellationToken ct) =>
+        spGrp.MapGet("/quotes/stream", async (IReadModelRepository<QuoteReadModel> repo, HttpResponse response, CancellationToken ct) =>
         {
             await StreamJsonArray(repo.StreamAllAsync(ct), response, ct);
         });
 
-        grp.MapGet("/insights/stream", async (IReadModelRepository<QuoteInsightReadModel> repo, HttpResponse response, CancellationToken ct) =>
+        spGrp.MapGet("/insights/stream", async (IReadModelRepository<QuoteInsightReadModel> repo, HttpResponse response, CancellationToken ct) =>
         {
             await StreamJsonArray(repo.StreamAllAsync(ct), response, ct);
         });
@@ -60,6 +72,7 @@ public static class ServiceCollectionExtensions
         services.Configure<AlphaVantageSimulationOptions>(configuration.GetSection("AlphaVantageSimulation"));
         services.Configure<ModelSecretsOptions>(configuration.GetSection("ModelSecrets"));
         services.Configure<PollingOptions>(configuration.GetSection("Polling"));
+        services.Configure<AgentDebugOptions>(configuration.GetSection("AgentDebug"));
 
         services.AddSingleton<IAlphaVantageQuoteMapper, AlphaVantageQuoteMapper>();
         services.AddSingleton<IAlphaVantageForexDailyMapper, AlphaVantageForexDailyMapper>();

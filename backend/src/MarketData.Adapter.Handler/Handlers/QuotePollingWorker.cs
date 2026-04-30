@@ -12,6 +12,7 @@ using Polly;
 using Polly.Retry;
 using Refit;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Application.AI.Services.Agents;
 
 namespace MarketData.Adapter.Handler.Handlers;
 
@@ -22,7 +23,9 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
     IOptions<PollingOptions> polling,
     IAlphaVantageQuoteMapper mapper,
     ILogger<QuotePollingWorker> logger,
-    IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse> fallbackService) : BackgroundService
+    IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse> fallbackService,
+    IOptions<AgentDebugOptions> debugOptions,
+    MarketAgentReplayService replayService) : BackgroundService
 {
     private readonly AsyncRetryPolicy<ApiResponse<AlphaVantageQuoteResponse>> _retryPolicy = Policy<ApiResponse<AlphaVantageQuoteResponse>>
             .Handle<HttpRequestException>()
@@ -45,6 +48,8 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
 
         var validatedClient = scope.ServiceProvider
             .GetRequiredService<ValidatedApiClient<AlphaVantageQuoteRequest, ApiResponse<AlphaVantageQuoteResponse>>>();
+
+        var correlationId = Guid.NewGuid();
 
         foreach (var symbol in provider.Value.QuoteSymbols)
         {
@@ -82,6 +87,36 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
             var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             await publisher.Publish(message, stoppingToken);
+
+            if (debugOptions.Value.Enabled)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Task.Delay(debugOptions.Value.DelayMs, stoppingToken);
+
+                        var key = $"agent:{message.Symbol}:{message.CorrelationId}";
+
+                        for (int i = 0; i < 5; i++)
+                        {
+                            var replay = await replayService.ReplayAsync(key);
+
+                            if (replay?.Completed == true)
+                            {
+                                AgentDebugPrinter.Print(replay);
+                                return;
+                            }
+
+                            await Task.Delay(200);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Agent debug replay failed");
+                    }
+                });
+            }
 
             await DelayBetweenRequests(stoppingToken);
         }

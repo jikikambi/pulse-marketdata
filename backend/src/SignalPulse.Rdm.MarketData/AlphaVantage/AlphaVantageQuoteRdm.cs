@@ -1,6 +1,7 @@
 ﻿namespace SignalPulse.Rdm.MarketData.AlphaVantage;
 
 public record AlphaVantageQuoteRdm(Guid MessageId,
+    Guid CorrelationId,
     string Provider,
     string Symbol,
 

@@ -25,6 +25,7 @@ public class AlphaVantageQuoteMapper : IAlphaVantageQuoteMapper
         var messageId = GuidUtility.Create(quote.Symbol, tradingDay.DateTime, price, "AlphaVantage");
 
         return new AlphaVantageQuoteRdm(MessageId: messageId,
+            CorrelationId: Guid.NewGuid(),
             Provider: "AlphaVantage",
             Symbol: quote.Symbol,
 

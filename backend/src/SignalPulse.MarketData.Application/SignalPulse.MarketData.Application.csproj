@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		<None Remove="Prompts\QuoteInsight\config.json" />
+		<None Remove="AI\Prompts\QuoteInsight\config.json" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="Prompts\ForexInsight\config.json">
+		<Content Include="AI\Prompts\ForexInsight\config.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Prompts\QuoteInsight\skprompt.txt">
+		<Content Include="AI\Prompts\QuoteInsight\skprompt.txt">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Prompts\QuoteInsight\config.json">
+		<Content Include="AI\Prompts\QuoteInsight\config.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
@@ -26,17 +26,6 @@
 		<ProjectReference Include="..\SignalPulse.MarketData.Infrastructure\SignalPulse.MarketData.Infrastructure.csproj" />
 		<ProjectReference Include="..\SignalPulse.Messaging\SignalPulse.Messaging.csproj" />
 		<ProjectReference Include="..\SignalPulse.Rdm.MarketData\SignalPulse.Rdm.MarketData.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="AI\Agents\Market\" />
-	  <Folder Include="AI\Agents\Debugging\" />
-	  <Folder Include="AI\Models\" />
-	  <Folder Include="AI\Providers\" />
-	  <Folder Include="AI\Plugins\" />
-	  <Folder Include="Services\Interfaces\" />
-	  <Folder Include="Services\Caching\" />
-	  <Folder Include="Services\State\" />
 	</ItemGroup>
 
 </Project>

@@ -45,6 +45,7 @@ internal static class MarketDataRdmBuilder
 
         var rdm = new AlphaVantageQuoteRdm(
             MessageId: Guid.NewGuid(),
+            CorrelationId: Guid.NewGuid(),
             Provider: "AlphaVantage",
             Symbol: "AAPL",
 

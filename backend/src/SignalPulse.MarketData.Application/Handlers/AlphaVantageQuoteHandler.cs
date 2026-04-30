@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using SignalPulse.MarketData.Application.AI;
+using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.Common;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Contracts.Events;
@@ -62,7 +62,7 @@ public sealed class AlphaVantageQuoteHandler(
     }
 
     protected override QuoteInsightInput CreateInsightInput(QuoteAggregate aggregate, AlphaVantageQuoteRdm rdm) =>
-        new(aggregate.Symbol, aggregate.Price, rdm.ChangePercent, rdm.Volume);
+        new(aggregate.Symbol, aggregate.Price, rdm.ChangePercent, rdm.Volume, rdm.CorrelationId);
 
     protected override QuoteInsightReadModel CreateReadModel(
         QuoteAggregate aggregate,

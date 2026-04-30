@@ -1,4 +1,4 @@
-﻿using SignalPulse.MarketData.Application.AI;
+﻿using SignalPulse.MarketData.Application.AI.Models;
 
 namespace SignalPulse.MarketData.Application.Interfaces;
 

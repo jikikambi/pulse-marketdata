@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using SignalPulse.MarketData.Application.AI;
+using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.Common;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Contracts.Events;

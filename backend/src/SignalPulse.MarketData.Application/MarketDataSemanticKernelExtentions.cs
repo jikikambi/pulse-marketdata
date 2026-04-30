@@ -1,25 +1,37 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel;
 using SignalPulse.AI.SemanticKernel;
-using SignalPulse.MarketData.Application.AI;
+using SignalPulse.MarketData.Application.AI.Cache;
+using SignalPulse.MarketData.Application.AI.Caching;
+using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Plugins;
+using SignalPulse.MarketData.Application.AI.Services.Agents;
+using SignalPulse.MarketData.Application.AI.Services.Memory;
+using SignalPulse.MarketData.Application.AI.Services.Prompts;
+using SignalPulse.MarketData.Application.AI.Services.Providers;
 using SignalPulse.MarketData.Application.Interfaces;
-using SignalPulse.MarketData.Application.Services;
 namespace SignalPulse.MarketData.Application;
 
 public static class MarketDataSemanticKernelExtentions
 {
     public static IServiceCollection AddMarketDataSemanticKernel(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<IQuoteCache, RedisQuoteCache>();
+        services.AddSingleton<IAgentStateStore, RedisAgentStateStore>();
 
-        services.AddPulseSemanticKernel(builder => 
+        services.AddPulseSemanticKernel(builder =>
         {
-            // Configure kernel as needed
+            builder.Plugins.AddFromType<QuoteInfoPlugin>();
         });
 
         bool useMock = configuration.GetValue<bool>("Ai:UseMock");
 
         services.AddSingleton<QuoteInsightPrompt>();
         services.AddSingleton<ForexInsightPrompt>();
+        services.AddSingleton<MarketAgentReplayService>();
+        services.AddSingleton<MarketAgentDebugger>();
+        services.AddSingleton<MarketAgentEngine>();
 
         if (useMock)
         {
@@ -30,9 +42,9 @@ public static class MarketDataSemanticKernelExtentions
         {
             services.AddSingleton<IAiInsightProvider<QuoteInsightInput>, SemanticKernelQuoteInsightProvider>();
             services.AddSingleton<IAiInsightProvider<ForexInsightInput>, SemanticKernelForexInsightProvider>();
+            services.AddSingleton<IAiInsightProvider<QuoteInsightInput>, AgentQuoteInsightProvider>();
         }
 
         return services;
     }
 }
-  

@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using SignalPulse.MarketData.Domain.Exceptions;
 using SignalPulse.MarketData.Domain.Forex;
-using SignalPulse.MarketData.Application.AI;
 using SignalPulse.MarketData.Application.Handlers;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Domain.Common;
@@ -11,6 +10,7 @@ using SignalPulse.MarketData.Infrastructure.Messaging;
 using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
 using SignalPulse.MarketData.Infrastructure.RedisStore;
+using SignalPulse.MarketData.Application.AI.Models;
 
 namespace SignalPulse.MarketData.Application.UnitTests.Handlers;
 
