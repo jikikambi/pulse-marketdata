@@ -17,9 +17,7 @@ public class MarketAgentReplayService(IAgentStateStore store)
         {
             return new AgentReplayResult(
                 key,
-                [
-                    new(DateTimeOffset.UtcNow,"replay_error","",ex.Message)
-                ],
+                [ new(DateTimeOffset.UtcNow,"replay_error","",ex.Message) ],
                 false);
         }
 

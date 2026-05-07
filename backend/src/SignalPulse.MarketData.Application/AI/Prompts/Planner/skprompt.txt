@@ -4,6 +4,7 @@ RULES:
 - You MUST NOT request tools not listed below
 - You MUST NOT assume market data
 - You MUST be conservative
+- Do NOT request tools if current input is sufficient
 
 TOOLS AVAILABLE:
 - GetQuoteContextAsync
@@ -13,14 +14,21 @@ Symbol: {{$symbol}}
 Price: {{$price}}
 ChangePercent: {{$changePercent}}
 Volume: {{$volume}}
+CorrelationId: {{$correlationId}}
+
+tool must be:
+- "GetQuoteContextAsync"
+- null
 
 Return JSON ONLY:
 
 {
-  "needTool": true|false,
+  "needTool": true,
   "tool": "GetQuoteContextAsync",
-  "confidence": 0-1,
-  "reason": "short explanation"
+  "confidence": 0.82,
+  "reason": "historical comparison required"
 }
 
-If unsure → set confidence < 0.5
+If unsure:
+- set confidence below 0.5
+- avoid tool usage

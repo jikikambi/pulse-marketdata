@@ -1,6 +1,7 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Models.Enums;
 using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Prompts;
@@ -48,9 +49,9 @@ public sealed class QuoteInsightPrompt(Kernel kernel)
 
     private static AIInsightResult SafeFallback(string reason)
         => new(
-            Sentiment: "neutral",
-            Direction: "sideways",
-            Volatility: "low",
+            Sentiment: SentimentType.Neutral,
+            Direction: DirectionType.Sideways,
+            Volatility: VolatilityType.Low,
             Rationale: $"fallback: {reason}"
         );
 }

@@ -64,7 +64,7 @@ public class AlphaVantageQuoteHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<QuoteInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult("Bullish", "Up", "Low", "Test"));
+            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Test"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -88,7 +88,7 @@ public class AlphaVantageQuoteHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<QuoteInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult("Bullish", "Up", "Low", "Strong earnings"));
+            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Strong earnings"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -100,7 +100,7 @@ public class AlphaVantageQuoteHandlerTests
     {
         var rdm = MarketDataRdmBuilder.ValidQuote();
 
-        var insight = new AIInsightResult("Bullish", "Up", "Low", "Strong earnings");
+        var insight = new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Strong earnings");
 
         AllowExecution();
 

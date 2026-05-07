@@ -1,20 +1,35 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel;
+using Polly.Retry;
 using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Plugins;
+using SignalPulse.MarketData.Application.AI.Policies;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class MarketAgentEngine(Kernel kernel,
     QuoteInfoPlugin quotePlugin,
-    IAgentStateStore store)
+    IAgentStateStore store,
+    ILogger<MarketAgentEngine> logger)
 {
+    private readonly AsyncRetryPolicy _retryPolicy = AiRetryPolicies.Create();
+
     private readonly string _promptPath = Path.Combine(AppContext.BaseDirectory, AgentConstants.PromptPath);
+    private readonly TimeSpan _plannerTimeout = TimeSpan.FromSeconds(5);
+    private readonly TimeSpan _reasonerTimeout = TimeSpan.FromSeconds(5);
 
     public async Task<AIInsightResult> RunAsync(QuoteInsightInput input, CancellationToken ct)
     {
+        var sw = Stopwatch.StartNew();
         var key = $"agent:{input.Symbol}:{input.CorrelationId}";
+
+        logger.LogInformation(
+            "Agent starting. Symbol: {Symbol}, CorrelationId: {CorrelationId}, Price: {Price}, Change%: {ChangePercent}",
+            input.Symbol, input.CorrelationId, input.Price, input.ChangePercent);
 
         var state = new MarketAgentState
         {
@@ -22,17 +37,42 @@ public sealed class MarketAgentEngine(Kernel kernel,
             Symbol = input.Symbol
         };
 
-        await Persist(key, state);
+        // 1: Validate input
 
         if (input.Price <= 0 || input.Volume < 0)
-            return await Unsafe(key, state, "invalid_market_data");
+        {
+            logger.LogWarning("Invalid market data. Symbol: {Symbol}, Price: {Price}, Volume: {Volume}", input.Symbol, input.Price, input.Volume);
 
-        var planRaw = await RunPlannerAsync(input, ct);
+            return await Unsafe(key, state, "invalid_market_data");
+        }
+
+        // 2: Run planner without timeout and caching via IAgentStateStore
+
+        string planRaw;
+
+        try
+        {
+            planRaw = await RunPlannerAsync(input, ct);
+            logger.LogDebug("Planner completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogWarning("Planner timeout for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
+
+            return await Safe(key, state, "planner_timeout");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Planner failed for {Symbol}", input.Symbol);
+
+            return await Safe(key, state, "planner_failed");
+        }
 
         state.PlanJson = planRaw;
+
         AddStep(state, AgentConstants.StepPlanner, input.Symbol, planRaw);
 
-        await Persist(key, state);
+        // 3: Parse Plan
 
         PlannerResult? plan;
 
@@ -40,132 +80,224 @@ public sealed class MarketAgentEngine(Kernel kernel,
         {
             plan = JsonSerializer.Deserialize<PlannerResult>(planRaw);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to deserialize plan for {Symbol}", input.Symbol);
+
             return await Safe(key, state, "planner_deserialization_failed");
         }
 
-        if (plan is null || plan.Confidence < 0.5)
+        if (plan is null)
+        {
+            logger.LogWarning("Plan is null for {Symbol}", input.Symbol);
+
+            return await Safe(key, state, "plan_is_null");
+        }
+
+        if (plan.Confidence < 0.5)
+        {
+            logger.LogDebug("Low confidence plan for {Symbol}: {Confidence}", input.Symbol, plan.Confidence);
+
             return await Safe(key, state, "low_confidence");
+        }
+
+        // 4: Fetch tool data if needed
 
         string? contextJson = null;
 
         if (plan.NeedTool)
         {
             if (plan.Tool != AgentConstants.ToolName)
+            {
+                logger.LogWarning("Unauthorized tool request for {Symbol}: {Tool}", input.Symbol, plan.Tool);
+
                 return await Safe(key, state, "unauthorized_tool_request");
-
-            var toolResult = await quotePlugin.GetQuoteContextAsync(input.Symbol);
-
-            if (toolResult is null)
-                return await Safe(key, state, "missing_tool_data");
-
-            QuoteContextDto? context;
+            }
 
             try
             {
-                context = JsonSerializer.Deserialize<QuoteContextDto>(JsonSerializer.Serialize(toolResult));
+                var toolResult = await quotePlugin.GetQuoteContextAsync(input.Symbol);
+
+                if (toolResult is null)
+                {
+                    logger.LogWarning("Tool returned null for {Symbol}", input.Symbol);
+
+                    return await Safe(key, state, "missing_tool_data");
+                }
+
+                contextJson = JsonSerializer.Serialize(toolResult);
+
+                state.ToolUsed = true;
+                state.ToolContextJson = contextJson;
+
+                AddStep(state, AgentConstants.StepTool, input.Symbol, contextJson);
+
+                logger.LogDebug("Tool call completed in {ElapsedMs}ms for {Symbol}",
+                    sw.ElapsedMilliseconds, input.Symbol);
             }
-            catch
+            catch (Exception ex)
             {
-                return await Safe(key, state, "tool_deserialization_failed");
+                logger.LogError(ex, "Tool call failed for {Symbol}", input.Symbol);
+
+                return await Safe(key, state, "tool_call_failed");
             }
-
-            contextJson = JsonSerializer.Serialize(context);
-
-            state.ToolUsed = true;
-            state.ToolContextJson = contextJson;
-
-            AddStep(state, AgentConstants.StepTool, input.Symbol, contextJson);
-
-            await Persist(key, state);
         }
+
+        // 5: Run reasoner with timeout
 
         AIInsightResult result;
 
         try
         {
             result = await RunReasonerAsync(input, contextJson, ct);
+
+            logger.LogDebug("Reasoner completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
         }
-        catch
+        catch (OperationCanceledException)
         {
+            logger.LogWarning("Reasoner timeout for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
+
+            return await Safe(key, state, "reasoner_timeout");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Reasoner failed for {Symbol}", input.Symbol);
+
             return await Safe(key, state, "reasoner_failed");
         }
 
-        AddStep(state, AgentConstants.StepReasoner, contextJson ?? "null",
-            JsonSerializer.Serialize(result));
-
-        await Persist(key, state);
+        // 6: Validate result
 
         if (!IsValid(result))
+        {
+            logger.LogWarning("Invalid LLM output for {Symbol}: Sentiment={Sentiment}", input.Symbol, result.Sentiment);
+
             return await Safe(key, state, "invalid_llm_output");
+        }
+
+        AddStep(state, AgentConstants.StepReasoner, contextJson ?? "null", JsonSerializer.Serialize(result));
 
         state.Completed = true;
 
+        // Optimization: Batch persistence
         await Persist(key, state);
+
+        sw.Stop();
+
+        logger.LogInformation("Agent completed successfully in {TotalMs}ms for {Symbol}. ToolUsed: {ToolUsed}, Completed: {Completed}",
+            sw.ElapsedMilliseconds, input.Symbol, state.ToolUsed, state.Completed);
 
         return result;
     }
 
     private async Task<string> RunPlannerAsync(QuoteInsightInput input, CancellationToken ct)
     {
-        var plugin = kernel.CreatePluginFromPromptDirectory(_promptPath);
+        var cacheKey = $"{input.Symbol}:{Math.Round(input.ChangePercent, 2)}";
 
-        var result = await kernel.InvokeAsync(plugin[AgentConstants.PlannerFunction], new KernelArguments
+        var cachedPlan = await store.GetPlanCacheAsync(cacheKey);
+
+        if (cachedPlan != null)
         {
-            ["symbol"] = input.Symbol,
-            ["price"] = input.Price,
-            ["changePercent"] = input.ChangePercent,
-            ["volume"] = input.Volume
-        }, ct);
+            logger.LogDebug("Planner cache hit for {Symbol}. CacheKey: {CacheKey}", input.Symbol, cacheKey);
 
-        return result.ToString();
+            return cachedPlan;
+        }
+
+        logger.LogDebug("Planner cache miss for {Symbol}. CacheKey: {CacheKey}. Making LLM call...", input.Symbol, cacheKey);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(_plannerTimeout);
+
+        try
+        {
+            var plugin = kernel.CreatePluginFromPromptDirectory(_promptPath);
+
+            var result = await _retryPolicy.ExecuteAsync(async () =>
+            {
+                return await kernel.InvokeAsync(plugin[AgentConstants.PlannerFunction], new KernelArguments
+                {
+                    ["symbol"] = input.Symbol,
+                    ["price"] = input.Price,
+                    ["changePercent"] = input.ChangePercent,
+                    ["volume"] = input.Volume,
+                    ["correlationId"] = input.CorrelationId
+                }, cts.Token);
+            });
+
+            var plan = result.ToString();
+
+            await store.SetPlanCacheAsync(cacheKey, plan);
+
+            logger.LogDebug("Planner result cached for {Symbol}. CacheKey: {CacheKey}, Duration: 30s", input.Symbol, cacheKey);
+
+            return plan;
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogWarning("Planner timed out after {TimeoutMs}ms for {Symbol}", _plannerTimeout.TotalMilliseconds, input.Symbol);
+            throw;
+        }
     }
 
     private async Task<AIInsightResult> RunReasonerAsync(QuoteInsightInput input, string? context, CancellationToken ct)
     {
-        var plugin = kernel.CreatePluginFromPromptDirectory(_promptPath);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-        var result = await kernel.InvokeAsync(plugin[AgentConstants.ReasonerFunction], new KernelArguments
-        {
-            ["symbol"] = input.Symbol,
-            ["price"] = input.Price,
-            ["changePercent"] = input.ChangePercent,
-            ["volume"] = input.Volume,
-            ["context"] = context ?? "null"
-        }, ct);
+        cts.CancelAfter(_reasonerTimeout);
 
         try
         {
+            var plugin = kernel.CreatePluginFromPromptDirectory(_promptPath);
+
+            var result = await _retryPolicy.ExecuteAsync(async () =>
+            {
+                return await kernel.InvokeAsync(plugin[AgentConstants.ReasonerFunction], new KernelArguments
+                {
+                    ["symbol"] = input.Symbol,
+                    ["price"] = input.Price,
+                    ["changePercent"] = input.ChangePercent,
+                    ["volume"] = input.Volume,
+                    ["context"] = context ?? "null",
+                    ["correlationId"] = input.CorrelationId
+                }, cts.Token);
+            });
+
             return JsonSerializer.Deserialize<AIInsightResult>(result.ToString())!;
         }
-        catch
+        catch (OperationCanceledException)
         {
-            throw new InvalidOperationException("Reasoner returned invalid JSON");
+            logger.LogWarning("Reasoner timed out after {TimeoutMs}ms for {Symbol}", _reasonerTimeout.TotalMilliseconds, input.Symbol);
+            throw;
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "Reasoner returned invalid JSON for {Symbol}", input.Symbol);
+
+            throw new InvalidOperationException("Reasoner returned invalid JSON", ex);
         }
     }
 
     private static bool IsValid(AIInsightResult result) =>
         result is not null &&
         !string.IsNullOrWhiteSpace(result.Rationale) &&
-        result.Sentiment is "bullish" or "bearish" or "neutral";
+        result.Sentiment is SentimentType.Bullish or SentimentType.Bearish or SentimentType.Neutral;
 
     private async Task<AIInsightResult> Safe(string key, MarketAgentState state, string reason)
     {
         AddStep(state, AgentConstants.StepSafe, reason, "");
 
-        await Persist(key, state);
+        logger.LogWarning("Safe fallback triggered for {Symbol}: {Reason}", state.Symbol, reason);
 
-        return new("neutral", "sideways", "low", $"safe_fallback: {reason}");
+        return new(SentimentType.Neutral, DirectionType.Sideways, VolatilityType.Low, $"safe_fallback: {reason}");
     }
 
     private async Task<AIInsightResult> Unsafe(string key, MarketAgentState state, string reason)
     {
         AddStep(state, AgentConstants.StepUnsafe, reason, "");
 
-        await Persist(key, state);
+        logger.LogError("Unsafe exit for {Symbol}: {Reason}", state.Symbol, reason);
 
-        return new("neutral", "sideways", "high", $"rejected_input: {reason}");
+        return new(SentimentType.Neutral, DirectionType.Sideways, VolatilityType.High, $"rejected_input: {reason}");
     }
 
     private static void AddStep(MarketAgentState state, string name, string input, string output)

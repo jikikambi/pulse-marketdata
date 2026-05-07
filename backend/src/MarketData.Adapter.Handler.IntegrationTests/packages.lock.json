@@ -894,8 +894,8 @@
       },
       "Polly.Core": {
         "type": "Transitive",
-        "resolved": "8.6.5",
-        "contentHash": "t+sUVrIwvo7UmsgHGgOG9F0GDZSRIm47u2ylH17Gvcv1q5hNEwgD5GoBlFyc0kh/pebmPyrAgvGsR/65ZBaXlg=="
+        "resolved": "8.6.6",
+        "contentHash": "lCBL9mmhF9TZxHG3beVRkyjlLohkIC464xIAq7J7Y59C+z42hmsdUaeCKl2SIAYertOUU5TeBXyQDLDQGIKePQ=="
       },
       "Spectre.Console": {
         "type": "Transitive",
@@ -1076,7 +1076,7 @@
         "type": "Project",
         "dependencies": {
           "MarketData.Adapter.Api.Client": "[1.0.0, )",
-          "Polly": "[8.6.5, )",
+          "Polly": "[8.6.6, )",
           "SignalPulse.AI": "[1.0.0, )",
           "SignalPulse.MarketData.Application": "[1.0.0, )",
           "SignalPulse.Messaging": "[1.0.0, )",
@@ -1115,6 +1115,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "[10.0.2, )",
+          "Polly": "[8.6.6, )",
           "SignalPulse.AI": "[1.0.0, )",
           "SignalPulse.MarketData.Domain": "[1.0.0, )",
           "SignalPulse.MarketData.Infrastructure": "[1.0.0, )",
@@ -1352,7 +1353,7 @@
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
-        "requested": "[10.0.3, )",
+        "requested": "[10.0.7, )",
         "resolved": "10.0.7",
         "contentHash": "Z6mfFEaFcwCfSboxJwOLfu7/31npCY9q70WUamHW/vRQhDvBKOT4Vf9YkZj5J6hLvJpb0oDEYfHunQZj0xxvKw=="
       },
@@ -1443,11 +1444,11 @@
       },
       "Polly": {
         "type": "CentralTransitive",
-        "requested": "[8.6.5, )",
-        "resolved": "8.6.5",
-        "contentHash": "VqtW2ZE/ALvQMAH1cQY3qZ2cF2OXa3oe/HKMdOv6Q02HCoEW0rsFNfcBONXlHBe1TnjWW1vdRxBEkPeq0/2FHA==",
+        "requested": "[8.6.6, )",
+        "resolved": "8.6.6",
+        "contentHash": "czKHYJ6uGowPijuZt4kgF4njfGvWxVZ8mKBcrZ9iEtwDe9HKdF0ug6p6TwUG8EHuuufgbDU//rSBFebt5/0Fyw==",
         "dependencies": {
-          "Polly.Core": "8.6.5"
+          "Polly.Core": "8.6.6"
         }
       },
       "RabbitMQ.Client": {

@@ -9,6 +9,7 @@ public sealed class RedisAgentStateStore(IDistributedCache cache,
     IConnectionMultiplexer redis) : IAgentStateStore
 {
     private const string IndexKey = "agent:index";
+    private const string PlannerCachePrefix = "planner:cache:";
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -54,5 +55,17 @@ public sealed class RedisAgentStateStore(IDistributedCache cache,
         var values = await db.SetMembersAsync(IndexKey);
 
         return [.. values.Select(v => (string)v!)];
+    }
+
+    public async Task<string?> GetPlanCacheAsync(string cacheKey) => await cache.GetStringAsync($"{PlannerCachePrefix}{cacheKey}");
+
+    public async Task SetPlanCacheAsync(string cacheKey, string planJson)
+    {
+        await cache.SetStringAsync($"{PlannerCachePrefix}{cacheKey}",
+            planJson,
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
+            });
     }
 }

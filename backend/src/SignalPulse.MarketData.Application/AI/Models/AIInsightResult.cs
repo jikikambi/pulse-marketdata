@@ -1,3 +1,5 @@
-﻿namespace SignalPulse.MarketData.Application.AI.Models;
+﻿using SignalPulse.MarketData.Application.AI.Models.Enums;
 
-public record AIInsightResult(string Sentiment, string Direction, string Volatility, string Rationale);
+namespace SignalPulse.MarketData.Application.AI.Models;
+
+public sealed record AIInsightResult(SentimentType Sentiment, DirectionType Direction, VolatilityType Volatility, string Rationale);

@@ -59,7 +59,8 @@ public class AlphaVantageForexHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<ForexInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult("Bullish", "Up", "Low", "Test"));
+            //.Returns(new AIInsightResult("Bullish", "Up", "Low", "Test"));
+            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Test"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -84,7 +85,7 @@ public class AlphaVantageForexHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<ForexInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult("Bullish", "Up", "Low", "Test"));
+            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low , "Test"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -95,7 +96,7 @@ public class AlphaVantageForexHandlerTests
     public async Task Handle_Should_Save_ReadModel_And_Publish_Event()
     {
         var rdm = MarketDataRdmBuilder.ValidForex();
-        var insight = new AIInsightResult("Bullish", "Up", "Low", "Test");
+        var insight = new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Test");
 
         A.CallTo(() => _idem.TryMarkProcessedAsync(A<string>._, A<CancellationToken>._))
             .Returns(true);

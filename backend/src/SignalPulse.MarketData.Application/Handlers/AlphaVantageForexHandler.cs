@@ -78,9 +78,9 @@ public sealed class AlphaVantageForexHandler(
             High = aggregate.High,
             Low = aggregate.Low,
             ForexDate = aggregate.ForexDate,
-            Sentiment = insight.Sentiment,
-            Direction = insight.Direction,
-            Volatility = insight.Volatility,
+            Sentiment = insight.Sentiment.ToString(),
+            Direction = insight.Direction.ToString(),
+            Volatility = insight.Volatility.ToString(),
             Rationale = insight.Rationale,
             ObservedAt = rdm.ForexDate
         };
@@ -101,9 +101,9 @@ public sealed class AlphaVantageForexHandler(
             aggregate.Low,
             aggregate.Close,
             aggregate.ForexDate,
-            insight.Sentiment,
-            insight.Direction,
-            insight.Volatility,
+            insight.Sentiment.ToString(),
+            insight.Direction.ToString(),
+            insight.Volatility.ToString(),
             insight.Rationale,
             DateTimeOffset.UtcNow);
 

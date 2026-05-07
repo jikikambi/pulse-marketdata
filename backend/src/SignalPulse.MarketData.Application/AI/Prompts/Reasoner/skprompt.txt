@@ -7,20 +7,40 @@ Symbol: {{$symbol}}
 Price: {{$price}}
 ChangePercent: {{$changePercent}}
 Volume: {{$volume}}
+CorrelationId: {{$correlationId}}
 
-TOOL CONTEXT (if any):
+TOOL CONTEXT:
 {{$context}}
 
 RULES:
 - Use ONLY provided data
 - If context is null → say "insufficient data"
-- Be conservative (no predictions certainty)
+- Be conservative
+- Never imply certainty
+- If data is incomplete:
+  - use neutral sentiment
+  - use sideways direction
+
+sentiment must be one of:
+- bullish
+- bearish
+- neutral
+
+direction must be one of:
+- up
+- down
+- sideways
+
+volatility must be one of:
+- low
+- medium
+- high
 
 Return ONLY valid JSON:
 
 {
-  "sentiment": "bullish | bearish | neutral",
-  "direction": "up | down | sideways",
-  "volatility": "low | medium | high",
-  "rationale": "short factual explanation"
+  "sentiment": "neutral",
+  "direction": "sideways",
+  "volatility": "low",
+  "rationale": "insufficient data for stronger conclusion"
 }

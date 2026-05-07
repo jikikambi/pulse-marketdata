@@ -8,4 +8,6 @@ public interface IAgentStateStore
     Task SetAsync(string key, MarketAgentState state);
     Task DeleteAsync(string key);
     Task<IEnumerable<string>> GetKeysAsync(string pattern);
+    Task<string?> GetPlanCacheAsync(string cacheKey);
+    Task SetPlanCacheAsync(string cacheKey, string planJson);
 }

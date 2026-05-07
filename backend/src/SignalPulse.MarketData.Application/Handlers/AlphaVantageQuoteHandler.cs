@@ -73,9 +73,9 @@ public sealed class AlphaVantageQuoteHandler(
             Id = insightId,
             Symbol = aggregate.Symbol,
             Price = aggregate.Price,
-            Sentiment = insight.Sentiment,
-            Direction = insight.Direction,
-            Volatility = insight.Volatility,
+            Sentiment = insight.Sentiment.ToString(),
+            Direction = insight.Direction.ToString(),
+            Volatility = insight.Volatility.ToString(),
             Rationale = insight.Rationale,
             ObservedAt = rdm.ObservedAtUtc
         };
@@ -91,9 +91,9 @@ public sealed class AlphaVantageQuoteHandler(
             aggregateId,
             aggregate.Symbol,
             aggregate.Price,
-            insight.Sentiment,
-            insight.Direction,
-            insight.Volatility,
+            insight.Sentiment.ToString(),
+            insight.Direction.ToString(),
+            insight.Volatility.ToString(),
             insight.Rationale,
             DateTimeOffset.UtcNow);
 
