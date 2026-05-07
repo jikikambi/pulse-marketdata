@@ -46,7 +46,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
             return await Unsafe(key, state, "invalid_market_data");
         }
 
-        // 2: Run planner without timeout and caching via IAgentStateStore
+        // 2: Run planner without timeout and caching
 
         string planRaw;
 
