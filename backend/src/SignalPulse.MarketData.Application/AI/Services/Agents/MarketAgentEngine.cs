@@ -43,7 +43,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
         {
             logger.LogWarning("Invalid market data. Symbol: {Symbol}, Price: {Price}, Volume: {Volume}", input.Symbol, input.Price, input.Volume);
 
-            return await Unsafe(key, state, "invalid_market_data");
+            return await Unsafe(state, "invalid_market_data");
         }
 
         // 2: Run planner without timeout and caching
@@ -59,13 +59,13 @@ public sealed class MarketAgentEngine(Kernel kernel,
         {
             logger.LogWarning("Planner timeout for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
 
-            return await Safe(key, state, "planner_timeout");
+            return await Safe(state, "planner_timeout");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Planner failed for {Symbol}", input.Symbol);
 
-            return await Safe(key, state, "planner_failed");
+            return await Safe(state, "planner_failed");
         }
 
         state.PlanJson = planRaw;
@@ -84,21 +84,21 @@ public sealed class MarketAgentEngine(Kernel kernel,
         {
             logger.LogError(ex, "Failed to deserialize plan for {Symbol}", input.Symbol);
 
-            return await Safe(key, state, "planner_deserialization_failed");
+            return await Safe(state, "planner_deserialization_failed");
         }
 
         if (plan is null)
         {
             logger.LogWarning("Plan is null for {Symbol}", input.Symbol);
 
-            return await Safe(key, state, "plan_is_null");
+            return await Safe(state, "plan_is_null");
         }
 
         if (plan.Confidence < 0.5)
         {
             logger.LogDebug("Low confidence plan for {Symbol}: {Confidence}", input.Symbol, plan.Confidence);
 
-            return await Safe(key, state, "low_confidence");
+            return await Safe(state, "low_confidence");
         }
 
         // 4: Fetch tool data if needed
@@ -111,7 +111,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
             {
                 logger.LogWarning("Unauthorized tool request for {Symbol}: {Tool}", input.Symbol, plan.Tool);
 
-                return await Safe(key, state, "unauthorized_tool_request");
+                return await Safe(state, "unauthorized_tool_request");
             }
 
             try
@@ -122,7 +122,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
                 {
                     logger.LogWarning("Tool returned null for {Symbol}", input.Symbol);
 
-                    return await Safe(key, state, "missing_tool_data");
+                    return await Safe(state, "missing_tool_data");
                 }
 
                 contextJson = JsonSerializer.Serialize(toolResult);
@@ -132,14 +132,13 @@ public sealed class MarketAgentEngine(Kernel kernel,
 
                 AddStep(state, AgentConstants.StepTool, input.Symbol, contextJson);
 
-                logger.LogDebug("Tool call completed in {ElapsedMs}ms for {Symbol}",
-                    sw.ElapsedMilliseconds, input.Symbol);
+                logger.LogDebug("Tool call completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Tool call failed for {Symbol}", input.Symbol);
 
-                return await Safe(key, state, "tool_call_failed");
+                return await Safe(state, "tool_call_failed");
             }
         }
 
@@ -157,13 +156,13 @@ public sealed class MarketAgentEngine(Kernel kernel,
         {
             logger.LogWarning("Reasoner timeout for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
 
-            return await Safe(key, state, "reasoner_timeout");
+            return await Safe(state, "reasoner_timeout");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Reasoner failed for {Symbol}", input.Symbol);
 
-            return await Safe(key, state, "reasoner_failed");
+            return await Safe(state, "reasoner_failed");
         }
 
         // 6: Validate result
@@ -172,14 +171,13 @@ public sealed class MarketAgentEngine(Kernel kernel,
         {
             logger.LogWarning("Invalid LLM output for {Symbol}: Sentiment={Sentiment}", input.Symbol, result.Sentiment);
 
-            return await Safe(key, state, "invalid_llm_output");
+            return await Safe(state, "invalid_llm_output");
         }
 
         AddStep(state, AgentConstants.StepReasoner, contextJson ?? "null", JsonSerializer.Serialize(result));
 
         state.Completed = true;
-
-        // Optimization: Batch persistence
+        
         await Persist(key, state);
 
         sw.Stop();
@@ -282,7 +280,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
         !string.IsNullOrWhiteSpace(result.Rationale) &&
         result.Sentiment is SentimentType.Bullish or SentimentType.Bearish or SentimentType.Neutral;
 
-    private async Task<AIInsightResult> Safe(string key, MarketAgentState state, string reason)
+    private async Task<AIInsightResult> Safe(MarketAgentState state, string reason)
     {
         AddStep(state, AgentConstants.StepSafe, reason, "");
 
@@ -291,7 +289,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
         return new(SentimentType.Neutral, DirectionType.Sideways, VolatilityType.Low, $"safe_fallback: {reason}");
     }
 
-    private async Task<AIInsightResult> Unsafe(string key, MarketAgentState state, string reason)
+    private async Task<AIInsightResult> Unsafe(MarketAgentState state, string reason)
     {
         AddStep(state, AgentConstants.StepUnsafe, reason, "");
 
