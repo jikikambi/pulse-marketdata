@@ -11,6 +11,7 @@ using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
 using SignalPulse.MarketData.Infrastructure.RedisStore;
 using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Models.Enums;
 
 namespace SignalPulse.MarketData.Application.UnitTests.Handlers;
 
@@ -60,7 +61,7 @@ public class AlphaVantageForexHandlerTests
 
         A.CallTo(() => _ai.GenerateAsync(A<ForexInsightInput>._, A<CancellationToken>._))
             //.Returns(new AIInsightResult("Bullish", "Up", "Low", "Test"));
-            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Test"));
+            .Returns(new AIInsightResult(SentimentType.Bullish, DirectionType.Up,   VolatilityType.Low, "Test"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -85,7 +86,7 @@ public class AlphaVantageForexHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<ForexInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low , "Test"));
+            .Returns(new AIInsightResult(SentimentType.Bullish, DirectionType.Up,   VolatilityType.Low, "Test"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -96,7 +97,7 @@ public class AlphaVantageForexHandlerTests
     public async Task Handle_Should_Save_ReadModel_And_Publish_Event()
     {
         var rdm = MarketDataRdmBuilder.ValidForex();
-        var insight = new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Test");
+        var insight = new AIInsightResult(SentimentType.Bullish, DirectionType.Up,   VolatilityType.Low, "Test");
 
         A.CallTo(() => _idem.TryMarkProcessedAsync(A<string>._, A<CancellationToken>._))
             .Returns(true);

@@ -2,6 +2,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.Handlers;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Domain.Common;
@@ -64,7 +65,7 @@ public class AlphaVantageQuoteHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<QuoteInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Test"));
+            .Returns(new AIInsightResult(SentimentType.Bullish, DirectionType.Up, VolatilityType.Low, "Test"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -88,7 +89,7 @@ public class AlphaVantageQuoteHandlerTests
             .Returns(new PersistResult(true, []));
 
         A.CallTo(() => _ai.GenerateAsync(A<QuoteInsightInput>._, A<CancellationToken>._))
-            .Returns(new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Strong earnings"));
+            .Returns(new AIInsightResult(SentimentType.Bullish, DirectionType.Up, VolatilityType.Low, "Strong earnings"));
 
         await _sut.Handle(rdm, CancellationToken.None);
 
@@ -100,7 +101,7 @@ public class AlphaVantageQuoteHandlerTests
     {
         var rdm = MarketDataRdmBuilder.ValidQuote();
 
-        var insight = new AIInsightResult(AI.Models.Enums.SentimentType.Bullish, AI.Models.Enums.DirectionType.Up, AI.Models.Enums.VolatilityType.Low, "Strong earnings");
+        var insight = new AIInsightResult(SentimentType.Bullish, DirectionType.Up, VolatilityType.Low, "Strong earnings");
 
         AllowExecution();
 

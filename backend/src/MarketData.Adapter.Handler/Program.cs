@@ -9,6 +9,8 @@ using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.ConfigureOpenTelemetry();
+
 // --- Options + Mappers ---
 builder.Services.AddHandlerServices(builder.Configuration);
 

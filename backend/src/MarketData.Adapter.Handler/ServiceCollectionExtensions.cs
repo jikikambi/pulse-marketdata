@@ -3,10 +3,14 @@ using MarketData.Adapter.Shared.AlphaVantage.Request;
 using MarketData.Adapter.Shared.AlphaVantage.Response;
 using MarketData.Adapter.Shared.Mappers;
 using MarketData.Adapter.Shared.Options;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
+using StackExchange.Redis;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -15,6 +19,31 @@ namespace MarketData.Adapter.Handler;
 [ExcludeFromCodeCoverage(Justification = "No logic")]
 public static class ServiceCollectionExtensions
 {
+    public static WebApplicationBuilder ConfigureOpenTelemetry(this WebApplicationBuilder builder)
+    {
+        using var connection = ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379");
+
+        builder.Logging.AddOpenTelemetry(logging =>
+        {
+            logging.IncludeFormattedMessage = true;
+            logging.IncludeScopes = true;
+        });
+
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(tracing =>
+            {
+                tracing.ConfigureResource(resource =>
+                resource.AddService(serviceName: "PulseMarketData.AgentEngine", serviceVersion: "1.0.0"))                
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddSource("Microsoft.SemanticKernel")
+                .AddRedisInstrumentation(connection)
+                .AddConsoleExporter();
+            });
+
+        return builder;
+    }
+
     public static void SignalREndpoint(this WebApplication app)
     {
         app.MapGet("/config", (IConfiguration configuration) =>

@@ -6,19 +6,20 @@ using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Plugins;
 using SignalPulse.MarketData.Application.AI.Policies;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
+using SignalPulse.MarketData.Application.AI.Services.Providers;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
-public sealed class MarketAgentEngine(Kernel kernel,
+public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
     QuoteInfoPlugin quotePlugin,
     IAgentStateStore store,
     ILogger<MarketAgentEngine> logger)
 {
     private readonly AsyncRetryPolicy _retryPolicy = AiRetryPolicies.Create();
 
-    private readonly string _promptPath = Path.Combine(AppContext.BaseDirectory, AgentConstants.PromptPath);
     private readonly TimeSpan _plannerTimeout = TimeSpan.FromSeconds(5);
     private readonly TimeSpan _reasonerTimeout = TimeSpan.FromSeconds(5);
 
@@ -78,7 +79,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
 
         try
         {
-            plan = JsonSerializer.Deserialize<PlannerResult>(planRaw);
+            plan = JsonSerializer.Deserialize<PlannerResult>(planRaw, AiJson.Options);
         }
         catch (Exception ex)
         {
@@ -177,7 +178,7 @@ public sealed class MarketAgentEngine(Kernel kernel,
         AddStep(state, AgentConstants.StepReasoner, contextJson ?? "null", JsonSerializer.Serialize(result));
 
         state.Completed = true;
-        
+
         await Persist(key, state);
 
         sw.Stop();
@@ -190,11 +191,14 @@ public sealed class MarketAgentEngine(Kernel kernel,
 
     private async Task<string> RunPlannerAsync(QuoteInsightInput input, CancellationToken ct)
     {
-        var cacheKey = $"{input.Symbol}:{Math.Round(input.ChangePercent, 2)}";
+        var normalizedPercent = Math.Round(input.ChangePercent, 2)
+            .ToString(CultureInfo.InvariantCulture);
+
+        var cacheKey = $"{input.Symbol}:{normalizedPercent}";
 
         var cachedPlan = await store.GetPlanCacheAsync(cacheKey);
 
-        if (cachedPlan != null)
+        if (!string.IsNullOrWhiteSpace(cachedPlan))
         {
             logger.LogDebug("Planner cache hit for {Symbol}. CacheKey: {CacheKey}", input.Symbol, cacheKey);
 
@@ -208,11 +212,9 @@ public sealed class MarketAgentEngine(Kernel kernel,
 
         try
         {
-            var plugin = kernel.CreatePluginFromPromptDirectory(_promptPath);
-
             var result = await _retryPolicy.ExecuteAsync(async () =>
             {
-                return await kernel.InvokeAsync(plugin[AgentConstants.PlannerFunction], new KernelArguments
+                return await kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, new KernelArguments
                 {
                     ["symbol"] = input.Symbol,
                     ["price"] = input.Price,
@@ -224,13 +226,18 @@ public sealed class MarketAgentEngine(Kernel kernel,
 
             var plan = result.ToString();
 
+            if (string.IsNullOrWhiteSpace(plan))
+            {
+                throw new InvalidOperationException($"Planner returned empty response for {input.Symbol}");
+            }
+
             await store.SetPlanCacheAsync(cacheKey, plan);
 
             logger.LogDebug("Planner result cached for {Symbol}. CacheKey: {CacheKey}, Duration: 30s", input.Symbol, cacheKey);
 
             return plan;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             logger.LogWarning("Planner timed out after {TimeoutMs}ms for {Symbol}", _plannerTimeout.TotalMilliseconds, input.Symbol);
             throw;
@@ -245,11 +252,9 @@ public sealed class MarketAgentEngine(Kernel kernel,
 
         try
         {
-            var plugin = kernel.CreatePluginFromPromptDirectory(_promptPath);
-
             var result = await _retryPolicy.ExecuteAsync(async () =>
             {
-                return await kernel.InvokeAsync(plugin[AgentConstants.ReasonerFunction], new KernelArguments
+                return await kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, new KernelArguments
                 {
                     ["symbol"] = input.Symbol,
                     ["price"] = input.Price,
@@ -260,9 +265,9 @@ public sealed class MarketAgentEngine(Kernel kernel,
                 }, cts.Token);
             });
 
-            return JsonSerializer.Deserialize<AIInsightResult>(result.ToString())!;
+            return JsonSerializer.Deserialize<AIInsightResult>(result.ToString(), AiJson.Options)!;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             logger.LogWarning("Reasoner timed out after {TimeoutMs}ms for {Symbol}", _reasonerTimeout.TotalMilliseconds, input.Symbol);
             throw;
