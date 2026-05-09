@@ -27,7 +27,6 @@ public sealed class MarketAgentEnginePerformanceTests
     public async Task RunAsync_WithSameSymbolAndChangePercent_ShouldUsePlannerCache()
     {
         // Arrange
-
         var input1 = new QuoteInsightInput("AAPL", 150m, 2.5m, 1_000_000, Guid.NewGuid());
 
         var input2 = new QuoteInsightInput("AAPL", 151m, 2.5m, 1_100_000, Guid.NewGuid());
@@ -66,13 +65,11 @@ public sealed class MarketAgentEnginePerformanceTests
             .Returns(reasonerJson);
 
         // Act
-
         var result1 = await engine.RunAsync(input1, CancellationToken.None);
 
         var result2 = await engine.RunAsync(input2, CancellationToken.None);
 
         // Assert
-
         Assert.NotNull(result1);
         Assert.NotNull(result2);
 
