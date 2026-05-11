@@ -3,6 +3,7 @@ using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 
 namespace SignalPulse.MarketData.Application.AI.Plugins;
@@ -10,7 +11,7 @@ namespace SignalPulse.MarketData.Application.AI.Plugins;
 public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
     IQuoteCache cache)
 {
-    private static readonly SemaphoreSlim _lock = new(1, 1);
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
     [KernelFunction]
     [Description("Provides historical or cached quote context for enrichment purposes.")]
@@ -28,7 +29,9 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
             };
         }
 
-        await _lock.WaitAsync();
+        var symbolLock = _locks.GetOrAdd(symbol, _ => new SemaphoreSlim(1, 1));
+
+        await symbolLock.WaitAsync();
 
         try
         {
@@ -66,7 +69,7 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
         }
         finally
         {
-            _lock.Release();
+            symbolLock.Release();
         }
     }
 }
