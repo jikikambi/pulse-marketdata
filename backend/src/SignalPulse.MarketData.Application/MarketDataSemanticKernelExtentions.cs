@@ -31,7 +31,7 @@ public static class MarketDataSemanticKernelExtentions
         services.AddSingleton<ForexInsightPrompt>();
         services.AddSingleton<MarketAgentReplayService>();
         services.AddSingleton<MarketAgentDebugger>();
-        services.AddScoped<QuoteInfoPlugin>();
+        services.AddScoped<IQuoteInfoTool, QuoteInfoPlugin>();
         services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
         services.AddScoped<MarketAgentEngine>();
 

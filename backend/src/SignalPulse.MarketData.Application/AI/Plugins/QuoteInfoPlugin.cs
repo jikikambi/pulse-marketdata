@@ -9,24 +9,19 @@ using System.ComponentModel;
 namespace SignalPulse.MarketData.Application.AI.Plugins;
 
 public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
-    IQuoteCache cache)
+    IQuoteCache cache) : IQuoteInfoTool
 {
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
     [KernelFunction]
     [Description("Provides historical or cached quote context for enrichment purposes.")]
-    public async Task<QuoteContextDto?> GetQuoteContextAsync(string symbol)
+    public async Task<QuoteContextResult?> GetQuoteContextAsync(string symbol)
     {
         var cached = await cache.GetAsync(symbol);
 
         if (cached is not null)
         {
-            return new QuoteContextDto
-            {
-                Price = cached.Price,
-                ChangePercent = cached.ChangePercent,
-                Source = "cache"
-            };
+            return FromCache(cached);
         }
 
         var symbolLock = _locks.GetOrAdd(symbol, _ => new SemaphoreSlim(1, 1));
@@ -39,12 +34,7 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
 
             if (cached is not null)
             {
-                return new QuoteContextDto
-                {
-                    Price = cached.Price,
-                    ChangePercent = cached.ChangePercent,
-                    Source = "cache"
-                };
+                return FromCache(cached);
             }
 
             var quotes = await repo.GetAllAsync();
@@ -57,7 +47,7 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
 
             await cache.SetAsync(symbol, latest);
 
-            return new QuoteContextDto
+            return new QuoteContextResult
             {
                 Price = latest.Price,
                 ChangePercent = latest.ChangePercent,
@@ -72,4 +62,11 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
             symbolLock.Release();
         }
     }
+
+    private static QuoteContextResult FromCache(QuoteReadModel q) => new()
+    {
+        Price = q.Price,
+        ChangePercent = q.ChangePercent,
+        Source = "cache"
+    };
 }

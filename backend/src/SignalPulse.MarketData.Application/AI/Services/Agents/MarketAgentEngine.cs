@@ -14,7 +14,7 @@ using System.Text.Json;
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
-    QuoteInfoPlugin quotePlugin,
+    IQuoteInfoTool quoteTool,
     IAgentStateStore store,
     ILogger<MarketAgentEngine> logger)
 {
@@ -117,7 +117,7 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
 
             try
             {
-                var toolResult = await quotePlugin.GetQuoteContextAsync(input.Symbol);
+                var toolResult = await quoteTool.GetQuoteContextAsync(input.Symbol);
 
                 if (toolResult is null)
                 {

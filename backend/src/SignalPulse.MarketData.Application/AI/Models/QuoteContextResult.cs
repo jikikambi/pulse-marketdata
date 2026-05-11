@@ -1,6 +1,6 @@
 ﻿namespace SignalPulse.MarketData.Application.AI.Models;
 
-public sealed class QuoteContextDto
+public sealed class QuoteContextResult
 {
     public decimal Price { get; set; }
     public decimal ChangePercent { get; set; }
