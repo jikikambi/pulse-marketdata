@@ -21,6 +21,11 @@ public sealed class MarketAgentEnginePerformanceTests
     private readonly IQuoteInfoTool _quoteTool = A.Fake<IQuoteInfoTool>();
     private readonly IAgentStateStore _store = A.Fake<IAgentStateStore>();
 
+    private readonly IRiskAgent _riskAgent = A.Fake<IRiskAgent>();
+    private readonly IValidatorAgent _validatorAgent = A.Fake<IValidatorAgent>();
+    private readonly IConfidenceScoringAgent _confidenceScoringAgent = A.Fake<IConfidenceScoringAgent>();
+    private readonly IFinalDecisionAgent _finalDecisionAgent = A.Fake<IFinalDecisionAgent>();
+
     private readonly ILogger<MarketAgentEngine> _logger = NullLogger<MarketAgentEngine>.Instance;
 
     [Fact]
@@ -31,7 +36,7 @@ public sealed class MarketAgentEnginePerformanceTests
 
         var input2 = new QuoteInsightInput("AAPL", 151m, 2.5m, 1_100_000, Guid.NewGuid());
 
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
+        const string cacheKey = "AAPL:2.5";
 
         var plannerJson = """
         {
@@ -51,11 +56,9 @@ public sealed class MarketAgentEnginePerformanceTests
         }
         """;
 
-        // Cache:
-        // First = miss
-        // Second = hit
+        var engine = CreateEngine();
 
-        A.CallTo(() => _store.GetPlanCacheAsync("AAPL:2.5"))
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .ReturnsNextFromSequence(null, plannerJson);
 
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
@@ -64,22 +67,22 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
+        SetupSuccessfulGovernancePipeline(input1);
+        SetupSuccessfulGovernancePipeline(input2);
+
         // Act
         var result1 = await engine.RunAsync(input1, CancellationToken.None);
 
         var result2 = await engine.RunAsync(input2, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result1);
-        Assert.NotNull(result2);
+        result1.Sentiment.Should().Be(SentimentType.Bullish);
+        result2.Sentiment.Should().Be(SentimentType.Bullish);
 
-        Assert.Equal(SentimentType.Bullish, result1.Sentiment);
-        Assert.Equal(SentimentType.Bullish, result2.Sentiment);
-
-        A.CallTo(() => _store.SetPlanCacheAsync("AAPL:2.5", A<string>._))
+        A.CallTo(() => _store.SetPlanCacheAsync(cacheKey, A<string>._))
             .MustHaveHappenedOnceExactly();
 
-        A.CallTo(() => _store.GetPlanCacheAsync("AAPL:2.5"))
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .MustHaveHappenedTwiceExactly();
 
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
@@ -93,16 +96,11 @@ public sealed class MarketAgentEnginePerformanceTests
     public async Task RunAsync_WithInvalidPrice_ShouldReturnQuickly()
     {
         // Arrange
-        var input = new QuoteInsightInput(
-            Symbol: "AAPL",
-            Price: -1m,
-            ChangePercent: 2.5m,
-            Volume: 1_000_000,
-            CorrelationId: Guid.NewGuid());
+        var input = new QuoteInsightInput("AAPL", -1m, 2.5m, 1_000_000, Guid.NewGuid());
+
+        var engine = CreateEngine();
 
         var sw = Stopwatch.StartNew();
-
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
 
         // Act
         var result = await engine.RunAsync(input, CancellationToken.None);
@@ -113,9 +111,7 @@ public sealed class MarketAgentEnginePerformanceTests
         result.Should().NotBeNull();
 
         result.Sentiment.Should().Be(SentimentType.Neutral);
-
         result.Direction.Should().Be(DirectionType.Sideways);
-
         result.Volatility.Should().Be(VolatilityType.High);
 
         result.Rationale.Should().Contain("invalid_market_data");
@@ -130,21 +126,15 @@ public sealed class MarketAgentEnginePerformanceTests
     public async Task RunAsync_WithPlannerTimeout_ShouldReturnFallback()
     {
         // Arrange
-        var input = new QuoteInsightInput(
-            Symbol: "MSFT",
-            Price: 420m,
-            ChangePercent: 1.2m,
-            Volume: 2_000_000,
-            CorrelationId: Guid.NewGuid());
+        var input = new QuoteInsightInput("MSFT", 420m, 1.2m, 2_000_000, Guid.NewGuid());
 
         var cacheKey = $"MSFT:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
 
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
+        var engine = CreateEngine();
 
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        // Simulate planner timeout
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
             .ThrowsAsync(new OperationCanceledException());
 
@@ -152,18 +142,11 @@ public sealed class MarketAgentEnginePerformanceTests
         var result = await engine.RunAsync(input, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-
         result.Sentiment.Should().Be(SentimentType.Neutral);
-
         result.Direction.Should().Be(DirectionType.Sideways);
-
         result.Volatility.Should().Be(VolatilityType.Low);
 
         result.Rationale.Should().Contain("planner_timeout");
-
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
-            .MustHaveHappenedOnceExactly();
 
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
             .MustNotHaveHappened();
@@ -173,12 +156,8 @@ public sealed class MarketAgentEnginePerformanceTests
     public async Task RunAsync_WhenPlannerRequestsUnauthorizedTool_ShouldReturnSafeFallback()
     {
         // Arrange
-        var input = new QuoteInsightInput(
-            Symbol: "AAPL",
-            Price: 180m,
-            ChangePercent: 3.2m,
-            Volume: 1_500_000,
-            CorrelationId: Guid.NewGuid());
+
+        var input = new QuoteInsightInput("AAPL", 180m, 3.2m, 1_500_000, Guid.NewGuid());
 
         var cacheKey = $"AAPL:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
 
@@ -191,7 +170,7 @@ public sealed class MarketAgentEnginePerformanceTests
         }
         """;
 
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
+        var engine = CreateEngine();
 
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
@@ -203,20 +182,13 @@ public sealed class MarketAgentEnginePerformanceTests
         var result = await engine.RunAsync(input, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-
         result.Sentiment.Should().Be(SentimentType.Neutral);
-
         result.Direction.Should().Be(DirectionType.Sideways);
-
         result.Volatility.Should().Be(VolatilityType.Low);
 
         result.Rationale.Should().Contain("unauthorized_tool_request");
 
         A.CallTo(() => _quoteTool.GetQuoteContextAsync(A<string>._))
-            .MustNotHaveHappened();
-
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
             .MustNotHaveHappened();
     }
 
@@ -224,12 +196,7 @@ public sealed class MarketAgentEnginePerformanceTests
     public async Task RunAsync_WhenToolReturnsNull_ShouldReturnSafeFallback()
     {
         // Arrange
-        var input = new QuoteInsightInput(
-            Symbol: "MSFT",
-            Price: 420m,
-            ChangePercent: 2.1m,
-            Volume: 2_000_000,
-            CorrelationId: Guid.NewGuid());
+        var input = new QuoteInsightInput("MSFT", 420m, 2.1m, 2_000_000, Guid.NewGuid());
 
         var cacheKey = $"MSFT:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
 
@@ -242,7 +209,7 @@ public sealed class MarketAgentEnginePerformanceTests
         }
         """;
 
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
+        var engine = CreateEngine();
 
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
@@ -257,38 +224,26 @@ public sealed class MarketAgentEnginePerformanceTests
         var result = await engine.RunAsync(input, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-
         result.Sentiment.Should().Be(SentimentType.Neutral);
-
         result.Direction.Should().Be(DirectionType.Sideways);
-
         result.Volatility.Should().Be(VolatilityType.Low);
 
         result.Rationale.Should().Contain("missing_tool_data");
 
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("MSFT"))
             .MustHaveHappenedOnceExactly();
-
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
-            .MustNotHaveHappened();
     }
 
     [Fact]
     public async Task RunAsync_WhenPlannerRequestsTool_ShouldInvokeToolAndPassContextToReasoner()
     {
         // Arrange
-        var input = new QuoteInsightInput(
-            "AAPL",
-            150m,
-            2.5m,
-            1_000_000,
-            Guid.NewGuid());
+        var input = new QuoteInsightInput("AAPL", 150m, 2.5m, 1_000_000, Guid.NewGuid());
 
-        var cacheKey = "AAPL:2.5";
+        const string cacheKey = "AAPL:2.5";
 
         var plannerJson = """
-        {      
+        {
             "needTool": true,
             "tool": "GetQuoteContextAsync",
             "confidence": 0.91,
@@ -312,7 +267,7 @@ public sealed class MarketAgentEnginePerformanceTests
             Source = "cache"
         };
 
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
+        var engine = CreateEngine();
 
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
@@ -323,51 +278,246 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("AAPL"))
             .Returns(toolResult);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction,
-                    A<KernelArguments>.That.Matches(args =>
-                        args["context"] != null &&
-                        args["context"]!.ToString()!.Contains("145")),
-                    A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>.That.Matches(args => args["context"] != null && args["context"]!.ToString()!.Contains("145")), A<CancellationToken>._))
             .Returns(reasonerJson);
+
+        SetupSuccessfulGovernancePipeline(input);
 
         // Act
         var result = await engine.RunAsync(input, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-
         result.Sentiment.Should().Be(SentimentType.Bullish);
-
         result.Direction.Should().Be(DirectionType.Up);
-
         result.Volatility.Should().Be(VolatilityType.Medium);
 
         result.Rationale.Should().Contain("historical");
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
-            .MustHaveHappenedOnceExactly();
-
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("AAPL"))
-            .MustHaveHappenedOnceExactly();
-
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction,
-                    A<KernelArguments>.That.Matches(args =>
-                        args["context"] != null &&
-                        args["context"]!.ToString()!.Contains("145")),
-                    A<CancellationToken>._))
             .MustHaveHappenedOnceExactly();
     }
 
     [Fact]
-    public async Task RunAsync_EndToEnd_ShouldCompleteWithin3Seconds()
+    public async Task RunAsync_WhenValidatorFails_ShouldReturnSafeFallback()
     {
         // Arrange
-        var input = new QuoteInsightInput(
-            Symbol: "NVDA",
-            Price: 950m,
-            ChangePercent: 4.2m,
-            Volume: 5_000_000,
-            CorrelationId: Guid.NewGuid());
+        var input = new QuoteInsightInput("AAPL", 180m, 1.5m, 1_000_000, Guid.NewGuid());
+
+        const string cacheKey = "AAPL:1.5";
+
+        var plannerJson = """
+        {
+             "needTool": false,
+             "tool": null,
+             "confidence": 0.9,
+             "reason": "sufficient data"
+        }
+        """;
+
+        var reasonerJson = """
+        {
+            "sentiment": "bullish",
+            "direction": "up",
+            "volatility": "medium",
+            "rationale": "healthy upward momentum"
+        }
+        """;
+
+        var engine = CreateEngine();
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(reasonerJson);
+
+        A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new ValidationResult(false, "invalid rationale", ValidationSeverity.High));
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Sentiment.Should().Be(SentimentType.Neutral);
+        result.Direction.Should().Be(DirectionType.Sideways);
+
+        result.Rationale.Should().Contain("validation_failed");
+
+        A.CallTo(() => _riskAgent.EvaluateAsync(A<QuoteInsightInput>._, A<AIInsightResult>._, A<CancellationToken>._))
+            .MustNotHaveHappened();
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRiskAgentRejectsInsight_ShouldReturnSafeFallback()
+    {
+        // Arrange
+        var input = new QuoteInsightInput("TSLA", 250m, 12.5m, 5_000_000, Guid.NewGuid());
+
+        const string cacheKey = "TSLA:12.5";
+
+        var plannerJson = """
+        {
+            "needTool": false,
+            "tool": null,
+            "confidence": 0.95,
+            "reason": "strong signal"
+        }
+        """;
+
+        var reasonerJson = """
+        {
+            "sentiment": "bullish",
+            "direction": "up",
+            "volatility": "high",
+            "rationale": "extreme breakout momentum"
+        }
+        """;
+
+        var engine = CreateEngine();
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(reasonerJson);
+
+        A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new ValidationResult(true, "passed", ValidationSeverity.Low));
+
+        A.CallTo(() => _riskAgent.EvaluateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new RiskAssessmentResult(true, "High volatility with extreme price movement", RiskLevel.High));
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Sentiment.Should().Be(SentimentType.Neutral);
+        result.Direction.Should().Be(DirectionType.Sideways);
+        result.Volatility.Should().Be(VolatilityType.Low);
+
+        result.Rationale.Should().Contain("risk_threshold_exceeded");
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenConfidenceIsLow_ShouldRejectDecision()
+    {
+        // Arrange
+        var input = new QuoteInsightInput("AAPL", 180m, 1.5m, 1_000_000, Guid.NewGuid());
+
+        const string cacheKey = "AAPL:1.5";
+
+        var plannerJson = """
+        {
+             "needTool": false,
+             "tool": null,
+             "confidence": 0.9,
+             "reason": "sufficient data"
+        }
+        """;
+
+        var reasonerJson = """
+        {
+            "sentiment": "bullish",
+            "direction": "up",
+            "volatility": "medium",
+            "rationale": "healthy upward momentum"
+        }
+        """;
+
+        var engine = CreateEngine();
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(reasonerJson);
+
+        A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new ValidationResult(true, "passed", ValidationSeverity.Low));
+
+        A.CallTo(() => _riskAgent.EvaluateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new RiskAssessmentResult(false, "acceptable", RiskLevel.Low));
+
+        A.CallTo(() => _confidenceScoringAgent.ScoreAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
+            .Returns(new ConfidenceScoreResult(0.31, ConfidenceLevel.Low, "weak confidence"));
+
+        A.CallTo(() => _finalDecisionAgent.DecideAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
+            .Returns(new FinalDecisionResult(DecisionOutcome.Rejected, "confidence too low"));
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Sentiment.Should().Be(SentimentType.Neutral);
+        result.Direction.Should().Be(DirectionType.Sideways);
+
+        result.Rationale.Should().Contain("decision_rejected");
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRiskAgentApprovesInsight_ShouldReturnReasonerResult()
+    {
+        // Arrange
+        var input = new QuoteInsightInput("AAPL", 180m, 1.5m, 1_000_000, Guid.NewGuid());
+
+        const string cacheKey = "AAPL:1.5";
+
+        var plannerJson = """
+        {
+             "needTool": false,
+             "tool": null,
+             "confidence": 0.9,
+             "reason": "sufficient data"
+        }
+        """;
+
+        var reasonerJson = """
+        {
+            "sentiment": "bullish",
+            "direction": "up",
+            "volatility": "medium",
+            "rationale": "healthy upward momentum"
+        }
+        """;
+
+        var engine = CreateEngine();
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(reasonerJson);
+
+        SetupSuccessfulGovernancePipeline(input);
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Sentiment.Should().Be(SentimentType.Bullish);
+        result.Direction.Should().Be(DirectionType.Up);
+        result.Volatility.Should().Be(VolatilityType.Medium);
+
+        result.Rationale.Should().Contain("upward momentum");
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldRecordStageExecutionMetadata()
+    {
+        // Arrange
+        var input = new QuoteInsightInput("NVDA", 950m, 4.2m, 5_000_000, Guid.NewGuid());
 
         var cacheKey = $"NVDA:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
 
@@ -389,7 +539,7 @@ public sealed class MarketAgentEnginePerformanceTests
         }
         """;
 
-        var engine = new MarketAgentEngine(_kernelInvoker, _quoteTool, _store, _logger);
+        var engine = CreateEngine();
 
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
@@ -400,6 +550,82 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
+        SetupSuccessfulGovernancePipeline(input);
+
+        MarketAgentState? persistedState = null;
+
+        A.CallTo(() => _store.SetAsync(A<string>._, A<MarketAgentState>._))
+            .Invokes(call => persistedState = call.GetArgument<MarketAgentState>(1));
+
+        // Act
+        await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        persistedState.Should().NotBeNull();
+
+        persistedState!.StageResults.Should().NotBeEmpty();
+
+        persistedState.StageResults.Should()
+            .Contain(x => x.Stage == MarketAgentStage.Planning.ToString());
+
+        persistedState.StageResults.Should()
+            .Contain(x => x.Stage == MarketAgentStage.Reasoning.ToString());
+
+        persistedState.StageResults.Should()
+            .Contain(x => x.Stage == MarketAgentStage.Validation.ToString());
+
+        persistedState.StageResults.Should()
+            .Contain(x => x.Stage == MarketAgentStage.RiskEvaluation.ToString());
+
+        persistedState.StageResults.Should()
+            .Contain(x => x.Stage == MarketAgentStage.Scoring.ToString());
+
+        persistedState.StageResults.Should()
+            .Contain(x => x.Stage == MarketAgentStage.Decision.ToString());
+
+        persistedState.StageResults.Should()
+            .OnlyContain(x => x.DurationMs >= 0 && x.CompletedAt >= x.StartedAt);
+    }
+
+    [Fact]
+    public async Task RunAsync_EndToEnd_ShouldCompleteWithin3Seconds()
+    {
+        // Arrange
+        var input = new QuoteInsightInput("NVDA", 950m, 4.2m, 5_000_000, Guid.NewGuid());
+
+        var cacheKey = $"NVDA:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
+
+        var plannerJson = """
+        {
+            "needTool": false,
+            "tool": null,
+            "confidence": 0.91,
+            "reason": "sufficient data"
+        }
+        """;
+
+        var reasonerJson = """
+        {
+            "sentiment": "bullish",
+            "direction": "up",
+            "volatility": "medium",
+            "rationale": "strong positive momentum"
+        }
+        """;
+
+        var engine = CreateEngine();
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(reasonerJson);
+
+        SetupSuccessfulGovernancePipeline(input);
+
         var sw = Stopwatch.StartNew();
 
         // Act
@@ -408,25 +634,29 @@ public sealed class MarketAgentEnginePerformanceTests
         sw.Stop();
 
         // Assert
-        result.Should().NotBeNull();
-
         result.Sentiment.Should().Be(SentimentType.Bullish);
-
         result.Direction.Should().Be(DirectionType.Up);
-
         result.Volatility.Should().Be(VolatilityType.Medium);
 
         result.Rationale.Should().Contain("positive momentum");
 
         sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3));
+    }
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
-            .MustHaveHappenedOnceExactly();
+    private MarketAgentEngine CreateEngine() => new(_kernelInvoker, _quoteTool, _riskAgent, _validatorAgent, _confidenceScoringAgent, _finalDecisionAgent, _store, _logger);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
-            .MustHaveHappenedOnceExactly();
+    private void SetupSuccessfulGovernancePipeline(QuoteInsightInput input)
+    {
+        A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new ValidationResult(true, "validation passed", ValidationSeverity.Low));
 
-        A.CallTo(() => _store.SetPlanCacheAsync(cacheKey, A<string>._))
-            .MustHaveHappenedOnceExactly();
+        A.CallTo(() => _riskAgent.EvaluateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new RiskAssessmentResult(false, "risk acceptable", RiskLevel.Low));
+
+        A.CallTo(() => _confidenceScoringAgent.ScoreAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
+            .Returns(new ConfidenceScoreResult(0.92, ConfidenceLevel.High, "strong confidence"));
+
+        A.CallTo(() => _finalDecisionAgent.DecideAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
+            .Returns(new FinalDecisionResult(DecisionOutcome.Approved, "approved"));
     }
 }

@@ -33,6 +33,10 @@ public static class MarketDataSemanticKernelExtentions
         services.AddSingleton<MarketAgentDebugger>();
         services.AddScoped<IQuoteInfoTool, QuoteInfoPlugin>();
         services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
+        services.AddScoped<IRiskAgent, RiskAgent>();
+        services.AddScoped<IValidatorAgent, ValidatorAgent>();
+        services.AddScoped<IConfidenceScoringAgent, ConfidenceScoringAgent>();
+        services.AddScoped<IFinalDecisionAgent, FinalDecisionAgent>();
         services.AddScoped<MarketAgentEngine>();
 
         if (useMock)

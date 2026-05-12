@@ -16,4 +16,5 @@ public static class AgentConstants
     public const string StepReasoner = "reasoner";
     public const string StepSafe = "safe_fallback";
     public const string StepUnsafe = "unsafe_exit";
+    public const string StepRisker = "risker";
 }

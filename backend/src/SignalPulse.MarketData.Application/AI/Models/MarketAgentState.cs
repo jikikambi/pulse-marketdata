@@ -12,4 +12,7 @@ public sealed class MarketAgentState
     public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     public List<AgentStep> Steps { get; set; } = [];
+    public List<StageExecutionResult> StageResults { get; set; } = [];
+    public ConfidenceScoreResult? Confidence { get; set; }
+    public FinalDecisionResult? FinalDecision { get; set; }
 }

@@ -15,6 +15,10 @@ namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
     IQuoteInfoTool quoteTool,
+    IRiskAgent riskAgent,
+    IValidatorAgent validatorAgent,
+    IConfidenceScoringAgent confidenceScoringAgent,
+    IFinalDecisionAgent finalDecisionAgent,
     IAgentStateStore store,
     ILogger<MarketAgentEngine> logger)
 {
@@ -32,10 +36,9 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
             "Agent starting. Symbol: {Symbol}, CorrelationId: {CorrelationId}, Price: {Price}, Change%: {ChangePercent}",
             input.Symbol, input.CorrelationId, input.Price, input.ChangePercent);
 
-        var state = new MarketAgentState
+        var ctx = new MarketAgentWorkflowContext
         {
-            CorrelationId = input.CorrelationId,
-            Symbol = input.Symbol
+            Input = input
         };
 
         // 1: Validate input
@@ -44,7 +47,7 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
         {
             logger.LogWarning("Invalid market data. Symbol: {Symbol}, Price: {Price}, Volume: {Volume}", input.Symbol, input.Price, input.Volume);
 
-            return await Unsafe(state, "invalid_market_data");
+            return await Unsafe(ctx.State, "invalid_market_data");
         }
 
         // 2: Run planner without timeout and caching
@@ -53,25 +56,26 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
 
         try
         {
-            planRaw = await RunPlannerAsync(input, ct);
+            planRaw = await RunStage(ctx, MarketAgentStage.Planning, () => RunPlannerAsync(input, ct));
+
             logger.LogDebug("Planner completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
         }
         catch (OperationCanceledException)
         {
             logger.LogWarning("Planner timeout for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
 
-            return await Safe(state, "planner_timeout");
+            return await Safe(ctx.State, "planner_timeout");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Planner failed for {Symbol}", input.Symbol);
 
-            return await Safe(state, "planner_failed");
+            return await Safe(ctx.State, "planner_failed");
         }
 
-        state.PlanJson = planRaw;
+        ctx.State.PlanJson = planRaw;
 
-        AddStep(state, AgentConstants.StepPlanner, input.Symbol, planRaw);
+        AddStep(ctx.State, AgentConstants.StepPlanner, input.Symbol, planRaw);
 
         // 3: Parse Plan
 
@@ -85,62 +89,40 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
         {
             logger.LogError(ex, "Failed to deserialize plan for {Symbol}", input.Symbol);
 
-            return await Safe(state, "planner_deserialization_failed");
+            return await Safe(ctx.State, "planner_deserialization_failed");
         }
 
         if (plan is null)
         {
             logger.LogWarning("Plan is null for {Symbol}", input.Symbol);
 
-            return await Safe(state, "plan_is_null");
+            return await Safe(ctx.State, "plan_is_null");
         }
 
         if (plan.Confidence < 0.5)
         {
             logger.LogDebug("Low confidence plan for {Symbol}: {Confidence}", input.Symbol, plan.Confidence);
 
-            return await Safe(state, "low_confidence");
+            return await Safe(ctx.State, "low_confidence");
         }
 
         // 4: Fetch tool data if needed
 
-        string? contextJson = null;
+        string? contextJson;
 
-        if (plan.NeedTool)
+        try
         {
-            if (plan.Tool != AgentConstants.ToolName)
-            {
-                logger.LogWarning("Unauthorized tool request for {Symbol}: {Tool}", input.Symbol, plan.Tool);
+            contextJson = await RunStage(ctx, MarketAgentStage.Tooling, () => ExecuteToolStageAsync(ctx, plan, input));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return await Safe(ctx.State, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Tool execution failed for {Symbol}", input.Symbol);
 
-                return await Safe(state, "unauthorized_tool_request");
-            }
-
-            try
-            {
-                var toolResult = await quoteTool.GetQuoteContextAsync(input.Symbol);
-
-                if (toolResult is null)
-                {
-                    logger.LogWarning("Tool returned null for {Symbol}", input.Symbol);
-
-                    return await Safe(state, "missing_tool_data");
-                }
-
-                contextJson = JsonSerializer.Serialize(toolResult);
-
-                state.ToolUsed = true;
-                state.ToolContextJson = contextJson;
-
-                AddStep(state, AgentConstants.StepTool, input.Symbol, contextJson);
-
-                logger.LogDebug("Tool call completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Tool call failed for {Symbol}", input.Symbol);
-
-                return await Safe(state, "tool_call_failed");
-            }
+            return await Safe(ctx.State, "tool_call_failed");
         }
 
         // 5: Run reasoner with timeout
@@ -149,7 +131,7 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
 
         try
         {
-            result = await RunReasonerAsync(input, contextJson, ct);
+            result = await RunStage(ctx, MarketAgentStage.Reasoning, () => RunReasonerAsync(input, contextJson, ct));
 
             logger.LogDebug("Reasoner completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
         }
@@ -157,34 +139,88 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
         {
             logger.LogWarning("Reasoner timeout for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
 
-            return await Safe(state, "reasoner_timeout");
+            return await Safe(ctx.State, "reasoner_timeout");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Reasoner failed for {Symbol}", input.Symbol);
 
-            return await Safe(state, "reasoner_failed");
+            return await Safe(ctx.State, "reasoner_failed");
         }
+
+        AddStep(ctx.State, AgentConstants.StepReasoner, contextJson ?? "null", JsonSerializer.Serialize(result));
 
         // 6: Validate result
 
-        if (!IsValid(result))
-        {
-            logger.LogWarning("Invalid LLM output for {Symbol}: Sentiment={Sentiment}", input.Symbol, result.Sentiment);
+        var validation = await RunStage(ctx, MarketAgentStage.Validation, () => validatorAgent.ValidateAsync(input, result, ct));
 
-            return await Safe(state, "invalid_llm_output");
+        ctx.Validation = validation;
+
+        if (!validation.IsValid)
+        {
+            logger.LogWarning("ValidatorAgent rejected insight for {Symbol}: {Reason}", input.Symbol, validation.Reason);
+
+            return await Safe(ctx.State, "validation_failed");
         }
 
-        AddStep(state, AgentConstants.StepReasoner, contextJson ?? "null", JsonSerializer.Serialize(result));
+        // 7: Risk evaluation
 
-        state.Completed = true;
+        var risk = await RunStage(ctx, MarketAgentStage.RiskEvaluation, () => riskAgent.EvaluateAsync(input, result, ct));
 
-        await Persist(key, state);
+        ctx.Risk = risk;
+
+        AddStep(ctx.State, AgentConstants.StepRisker,
+            JsonSerializer.Serialize(new RiskAuditInput(input.Symbol, input.ChangePercent, result.Volatility, result.Sentiment)),
+            JsonSerializer.Serialize(risk));
+
+        logger.LogInformation("RiskAgent evaluated {Symbol}. Risky: {IsRisky}, Level: {Level}, Reason: {Reason}", input.Symbol, risk.IsRisky, risk.Level, risk.Reason);
+
+        if (risk.IsRisky)
+        {
+            logger.LogWarning("RiskAgent blocked execution for {Symbol}: {Reason}", input.Symbol, risk.Reason);
+
+            return await Safe(ctx.State, "risk_threshold_exceeded");
+        }
+
+        // 8: Confidence scoring 
+
+        var confidence = await RunStage(ctx, MarketAgentStage.Scoring, () => confidenceScoringAgent.ScoreAsync(ctx, ct));
+
+        ctx.Confidence = confidence;
+
+        ctx.State.Confidence = confidence;
+
+        logger.LogInformation("ConfidenceScoringAgent evaluated {Symbol}. Score: {Score}, Level: {Level}", input.Symbol, confidence.Score, confidence.Level);  
+
+        // 9: Final decision
+
+        var decision = await RunStage(ctx, MarketAgentStage.Decision, () => finalDecisionAgent.DecideAsync(ctx, ct));
+
+        ctx.FinalDecision = decision;
+
+        ctx.State.FinalDecision = decision;
+
+        logger.LogInformation("FinalDecisionAgent decided {Symbol}. Outcome: {Outcome}, Reason: {Reason}", input.Symbol, decision.Outcome, decision.Reason);
+
+        // Workflow is now complete
+
+        ctx.State.Completed = true;
+
+        ctx.State.StageResults = ctx.StageResults;
+
+        await Persist(key, ctx.State);
 
         sw.Stop();
 
         logger.LogInformation("Agent completed successfully in {TotalMs}ms for {Symbol}. ToolUsed: {ToolUsed}, Completed: {Completed}",
-            sw.ElapsedMilliseconds, input.Symbol, state.ToolUsed, state.Completed);
+            sw.ElapsedMilliseconds, input.Symbol, ctx.State.ToolUsed, ctx.State.Completed);
+
+        // 10: Final governance enforcement
+
+        if (decision.Outcome != DecisionOutcome.Approved)
+        {
+            return await Safe(ctx.State, $"decision_{decision.Outcome.ToString().ToLowerInvariant()}");
+        }
 
         return result;
     }
@@ -280,11 +316,6 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
         }
     }
 
-    private static bool IsValid(AIInsightResult result) =>
-        result is not null &&
-        !string.IsNullOrWhiteSpace(result.Rationale) &&
-        result.Sentiment is SentimentType.Bullish or SentimentType.Bearish or SentimentType.Neutral;
-
     private async Task<AIInsightResult> Safe(MarketAgentState state, string reason)
     {
         AddStep(state, AgentConstants.StepSafe, reason, "");
@@ -311,4 +342,76 @@ public sealed class MarketAgentEngine(IKernelInvoker kernelInvoker,
 
     private Task Persist(string key, MarketAgentState state)
         => store.SetAsync(key, state);
+
+    private async Task<T> RunStage<T>(MarketAgentWorkflowContext ctx, MarketAgentStage stage, Func<Task<T>> action)
+    {
+        var started = DateTimeOffset.UtcNow;
+
+        var sw = Stopwatch.StartNew();
+
+        try
+        {
+            logger.LogDebug("Starting stage {Stage} for {Symbol}", stage, ctx.Input.Symbol);
+
+            var result = await action();
+
+            sw.Stop();
+
+            ctx.StageResults.Add(new StageExecutionResult(
+                Stage: stage.ToString(),
+                Success: true,
+                DurationMs: sw.ElapsedMilliseconds,
+                Error: null,
+                StartedAt: started,
+                CompletedAt: DateTimeOffset.UtcNow));
+
+            logger.LogDebug("Completed stage {Stage} in {ElapsedMs}ms for {Symbol}", stage, sw.ElapsedMilliseconds, ctx.Input.Symbol);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+
+            ctx.StageResults.Add(new StageExecutionResult(
+                Stage: stage.ToString(),
+                Success: false,
+                DurationMs: sw.ElapsedMilliseconds,
+                Error: ex.Message,
+                StartedAt: started,
+                CompletedAt: DateTimeOffset.UtcNow));
+
+            logger.LogError(ex, "Stage {Stage} failed after {ElapsedMs}ms for {Symbol}", stage, sw.ElapsedMilliseconds, ctx.Input.Symbol);
+
+            throw;
+        }
+    }
+
+    private async Task<string?> ExecuteToolStageAsync(MarketAgentWorkflowContext ctx, PlannerResult plan, QuoteInsightInput input)
+    {
+        if (!plan.NeedTool)
+        {
+            return null;
+        }
+
+        return await RunStage(ctx, MarketAgentStage.Tooling, async () =>
+        {
+            if (plan.Tool != AgentConstants.ToolName)
+            {
+
+                throw new InvalidOperationException("unauthorized_tool_request");
+            }
+
+            var toolResult = await quoteTool.GetQuoteContextAsync(input.Symbol) ?? throw new InvalidOperationException("missing_tool_data");
+
+            var contextJson = JsonSerializer.Serialize(toolResult);
+
+            ctx.State.ToolUsed = true;
+            ctx.State.ToolContextJson = contextJson;
+
+            AddStep(ctx.State, AgentConstants.StepTool, input.Symbol, contextJson);
+
+            return contextJson;
+        });
+    }
 }
