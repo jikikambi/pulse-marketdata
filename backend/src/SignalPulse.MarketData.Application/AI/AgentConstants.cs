@@ -17,4 +17,5 @@ public static class AgentConstants
     public const string StepSafe = "safe_fallback";
     public const string StepUnsafe = "unsafe_exit";
     public const string StepRisker = "risker";
+    public const string StepInputValidation = "input_validation";
 }

@@ -2,11 +2,14 @@
 
 public enum MarketAgentStage
 {
-    Planning,
-    Tooling,
-    Reasoning,
-    RiskEvaluation,
-    Validation,
-    Scoring,
-    Decision
+    ValidationInput = 0,
+    Planning = 1,
+    PlanParsing = 2,
+    Tooling = 3,
+    Reasoning = 4,
+    Validation = 5,
+    RiskEvaluation = 6,
+    Scoring = 7,
+    Decision = 8,
+    Persistence = 9
 }

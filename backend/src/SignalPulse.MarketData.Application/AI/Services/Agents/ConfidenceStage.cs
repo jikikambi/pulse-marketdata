@@ -1,0 +1,23 @@
+﻿using Microsoft.Extensions.Logging;
+using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Models.Enums;
+
+namespace SignalPulse.MarketData.Application.AI.Services.Agents;
+
+public sealed class ConfidenceStage(IConfidenceScoringAgent confidenceScoringAgent,
+    ILogger<ConfidenceStage> logger)
+    : MarketAgentStageBase<ConfidenceStage>(logger)
+{
+    public override MarketAgentStage Stage => MarketAgentStage.Scoring;
+
+    protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
+    {
+        var confidence = await confidenceScoringAgent.ScoreAsync(ctx, ct);
+
+        ctx.Confidence = confidence;
+
+        ctx.State.Confidence = confidence;
+
+        Logger.LogInformation("ConfidenceScoringAgent evaluated {Symbol}. Score: {Score}, Level: {Level}", ctx.Input.Symbol, confidence.Score, confidence.Level);
+    }
+}

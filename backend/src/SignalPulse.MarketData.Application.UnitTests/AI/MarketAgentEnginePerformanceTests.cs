@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
+using Polly;
 using SignalPulse.MarketData.Application.AI;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
@@ -156,7 +157,6 @@ public sealed class MarketAgentEnginePerformanceTests
     public async Task RunAsync_WhenPlannerRequestsUnauthorizedTool_ShouldReturnSafeFallback()
     {
         // Arrange
-
         var input = new QuoteInsightInput("AAPL", 180m, 3.2m, 1_500_000, Guid.NewGuid());
 
         var cacheKey = $"AAPL:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
@@ -643,9 +643,206 @@ public sealed class MarketAgentEnginePerformanceTests
         sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3));
     }
 
-    private MarketAgentEngine CreateEngine() => new(_kernelInvoker, _quoteTool, _riskAgent, _validatorAgent, _confidenceScoringAgent, _finalDecisionAgent, _store, _logger);
+    [Fact]
+    public async Task RunAsync_WhenValidationFails_ShouldTerminatePipeline()
+    {
+        // Arrange
+        var input = new QuoteInsightInput("AAPL", 150m, 2m, 1_000_000, Guid.NewGuid());
 
-    private void SetupSuccessfulGovernancePipeline(QuoteInsightInput input)
+        SetupPlannerAndReasoner();
+
+        A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new ValidationResult(false, "invalid", ValidationSeverity.High));
+
+        var engine = CreateEngine();
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Rationale.Should().Contain("validation_failed");
+
+        A.CallTo(() => _riskAgent.EvaluateAsync(A<QuoteInsightInput>._, A<AIInsightResult>._, A<CancellationToken>._))
+            .MustNotHaveHappened();
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldPersistWorkflowState()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        SetupSuccessfulPipeline(input);
+
+        var engine = CreateEngine();
+
+        // Act
+        await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        A.CallTo(() => _store.SetAsync(A<string>._, A<MarketAgentState>._))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenDecisionRejected_ShouldReturnFallback()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        SetupPlannerAndReasoner();
+
+        SetupSuccessfulValidation(input);
+
+        A.CallTo(() => _finalDecisionAgent.DecideAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
+            .Returns(new FinalDecisionResult(DecisionOutcome.Rejected, "low confidence"));
+
+        var engine = CreateEngine();
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Rationale.Should().Contain("decision_rejected");
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenPlannerReturnsInvalidJson_ShouldReturnFallback()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        var cacheKey = "AAPL:2";
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns("INVALID_JSON");
+
+        var engine = CreateEngine();
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Rationale.Should().Contain("planner_deserialization_failed");
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenPlanConfidenceTooLow_ShouldReturnFallback()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        var plannerJson = """
+        {
+            "needTool": false,
+            "tool": null,
+            "confidence": 0.2,
+            "reason": "weak signal"
+        }
+        """;
+
+        SetupPlanner(plannerJson);
+
+        var engine = CreateEngine();
+
+        // Act
+        var result = await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        result.Rationale.Should().Contain("low_confidence");
+    }
+
+    private MarketAgentEngine CreateEngine()
+    {
+        var outcomeFactory = new WorkflowOutcomeFactory(NullLogger<WorkflowOutcomeFactory>.Instance);
+
+        var stages = new IMarketAgentStage[]
+        {
+
+        new ValidationInputStage( NullLogger<ValidationInputStage>.Instance, outcomeFactory),
+
+        new PlannerStage( _kernelInvoker, _store, Policy.NoOpAsync<string>(), NullLogger<PlannerStage>.Instance, outcomeFactory),
+
+        new PlanParsingStage(  NullLogger<PlanParsingStage>.Instance, outcomeFactory),
+
+        new ToolStage( _quoteTool,  NullLogger<ToolStage>.Instance, outcomeFactory),
+
+        new ReasoningStage( _kernelInvoker, Policy.NoOpAsync<string>(),  NullLogger<ReasoningStage>.Instance,  outcomeFactory),
+
+        new ValidationStage( _validatorAgent, NullLogger<ValidationStage>.Instance, outcomeFactory),
+
+        new RiskStage( _riskAgent, NullLogger<RiskStage>.Instance, outcomeFactory),
+
+        new ConfidenceStage( _confidenceScoringAgent, NullLogger<ConfidenceStage>.Instance),
+
+        new DecisionStage( _finalDecisionAgent,  NullLogger<DecisionStage>.Instance, outcomeFactory),
+
+        new PersistenceStage( _store,  NullLogger<PersistenceStage>.Instance, outcomeFactory)
+        };
+
+        return new MarketAgentEngine(stages, _logger, outcomeFactory);
+    }
+
+    private static QuoteInsightInput CreateValidInput(
+    string symbol = "AAPL",
+    decimal price = 150m,
+    decimal changePercent = 2m,
+    long volume = 1_000_000)
+    {
+        return new QuoteInsightInput(symbol, price, changePercent, volume, Guid.NewGuid());
+    }
+
+    private void SetupPlanner(string plannerJson, QuoteInsightInput? input = null)
+    {
+        input ??= CreateValidInput();
+
+        var cacheKey = $"{input.Symbol}:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+    }
+
+    private void SetupPlannerAndReasoner(QuoteInsightInput? input = null, string? plannerJson = null, string? reasonerJson = null)
+    {
+        input ??= CreateValidInput();
+
+        plannerJson ??= """
+        {
+           "needTool": false,
+           "tool": null,
+           "confidence": 0.91,
+           "reason": "sufficient data"
+        }
+        """;
+
+        reasonerJson ??= """
+        {
+           "sentiment": "bullish",
+           "direction": "up",
+           "volatility": "medium",
+           "rationale": "positive momentum"
+        }
+        """;
+
+        var cacheKey = $"{input.Symbol}:{Math.Round(input.ChangePercent, 2).ToString(CultureInfo.InvariantCulture)}";
+
+        A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
+            .Returns((string?)null);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(plannerJson);
+
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+            .Returns(reasonerJson);
+    }
+
+    private void SetupSuccessfulValidation(QuoteInsightInput input)
     {
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
             .Returns(new ValidationResult(true, "validation passed", ValidationSeverity.Low));
@@ -658,5 +855,17 @@ public sealed class MarketAgentEnginePerformanceTests
 
         A.CallTo(() => _finalDecisionAgent.DecideAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
             .Returns(new FinalDecisionResult(DecisionOutcome.Approved, "approved"));
+    }
+
+    private void SetupSuccessfulPipeline(QuoteInsightInput input)
+    {
+        SetupPlannerAndReasoner(input);
+
+        SetupSuccessfulValidation(input);
+    }
+
+    private void SetupSuccessfulGovernancePipeline(QuoteInsightInput input)
+    {
+        SetupSuccessfulValidation(input);
     }
 }

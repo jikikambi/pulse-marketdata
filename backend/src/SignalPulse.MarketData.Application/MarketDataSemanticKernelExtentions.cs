@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
+using Polly;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Application.AI.Caching;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Plugins;
+using SignalPulse.MarketData.Application.AI.Policies;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Prompts;
@@ -33,10 +35,25 @@ public static class MarketDataSemanticKernelExtentions
         services.AddSingleton<MarketAgentDebugger>();
         services.AddScoped<IQuoteInfoTool, QuoteInfoPlugin>();
         services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
+
+        services.AddSingleton<IAsyncPolicy<string>>(_ => AiRetryPolicies.Create());
+
         services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IValidatorAgent, ValidatorAgent>();
         services.AddScoped<IConfidenceScoringAgent, ConfidenceScoringAgent>();
         services.AddScoped<IFinalDecisionAgent, FinalDecisionAgent>();
+        services.AddScoped<IWorkflowOutcomeFactory, WorkflowOutcomeFactory>();
+        services.AddScoped<IMarketAgentStage, ValidationInputStage>();
+        services.AddScoped<IMarketAgentStage, PlannerStage>();
+        services.AddScoped<IMarketAgentStage, PlanParsingStage>();
+        services.AddScoped<IMarketAgentStage, ToolStage>();
+        services.AddScoped<IMarketAgentStage, ReasoningStage>();
+        services.AddScoped<IMarketAgentStage, ValidationStage>();
+        services.AddScoped<IMarketAgentStage, RiskStage>();
+        services.AddScoped<IMarketAgentStage, ConfidenceStage>();
+        services.AddScoped<IMarketAgentStage, DecisionStage>();
+        services.AddScoped<IMarketAgentStage, PersistenceStage>();
+
         services.AddScoped<MarketAgentEngine>();
 
         if (useMock)

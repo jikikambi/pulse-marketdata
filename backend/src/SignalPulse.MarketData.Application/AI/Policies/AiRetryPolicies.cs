@@ -5,15 +5,12 @@ namespace SignalPulse.MarketData.Application.AI.Policies;
 
 public static class AiRetryPolicies
 {
-    public static AsyncRetryPolicy Create()
+    public static IAsyncPolicy<string> Create()
     {
-        return Policy
+        return Policy<string>
             .Handle<HttpRequestException>()
             .Or<TaskCanceledException>()
             .Or<TimeoutException>()
-            .WaitAndRetryAsync(
-                retryCount: 3,
-                sleepDurationProvider: retry =>
-                    TimeSpan.FromSeconds(Math.Pow(2, retry)));
+            .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: retry => TimeSpan.FromSeconds(Math.Pow(2, retry)));
     }
 }
