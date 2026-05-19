@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
-using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
 using System.Text.Json;
 
-namespace SignalPulse.MarketData.Application.AI.Caching;
+namespace SignalPulse.MarketData.Application.AI.Cache;
 
 public class RedisQuoteCache(IDistributedCache cache) : IQuoteCache
 {

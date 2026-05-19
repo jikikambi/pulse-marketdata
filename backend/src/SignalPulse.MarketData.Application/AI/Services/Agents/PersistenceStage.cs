@@ -35,7 +35,7 @@ public sealed class PersistenceStage(IAgentStateStore store,
                 ctx.Terminate(outcomeFactory.Safe(ctx, $"decision_{ctx.FinalDecision.Outcome.ToString().ToLowerInvariant()}"));
             }
 
-            // Persist state
+            // Persist state (with a workflow execution identity key)
 
             var key = $"agent:{ctx.Input.Symbol}:{ctx.Input.CorrelationId}";
 

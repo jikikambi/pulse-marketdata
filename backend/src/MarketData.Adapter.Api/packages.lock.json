@@ -105,11 +105,6 @@
           "OpenTelemetry.Api.ProviderBuilderExtensions": "1.15.3"
         }
       },
-      "OpenTelemetry.Api": {
-        "type": "Transitive",
-        "resolved": "1.15.3",
-        "contentHash": "fX+fkCysfPut+qCcT3bKqyX4QN9Saf4CgX8HLOHywEVD+Xr7sULtfuypITpoDysjx8R59dn/3mWhgimMH8cm/g=="
-      },
       "OpenTelemetry.Api.ProviderBuilderExtensions": {
         "type": "Transitive",
         "resolved": "1.15.3",
@@ -138,6 +133,12 @@
         "type": "Transitive",
         "resolved": "10.1.7",
         "contentHash": "iJo3ODyUb/M8Vm8AH1r9y9iAba0w95xsCn3zFVl96ISRHbTDWxi+l7oFVCZqUEdjd97B8VMDPnMliWAdomR8uw=="
+      },
+      "OpenTelemetry.Api": {
+        "type": "CentralTransitive",
+        "requested": "[1.15.3, )",
+        "resolved": "1.15.3",
+        "contentHash": "fX+fkCysfPut+qCcT3bKqyX4QN9Saf4CgX8HLOHywEVD+Xr7sULtfuypITpoDysjx8R59dn/3mWhgimMH8cm/g=="
       }
     }
   }

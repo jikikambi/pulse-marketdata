@@ -39,6 +39,7 @@ builder.Services.AddSignalR().AddMessagePackProtocol();
 builder.Services.AddMarketDataRedisMarten(builder.Configuration);
 
 // --- Semantic Kernel ---
+builder.Services.AddElasticSearch(builder.Configuration);
 builder.Services.AddMarketDataSemanticKernel(builder.Configuration);
 
 // --- MassTransit + RabbitMQ + Wolverine ---
@@ -58,6 +59,8 @@ app.UseHttpsRedirection();
 
 // --- CORS ----
 app.UseCors(CORS_POLICY);
+
+await app.Services.InitializeElasticAsync();
 
 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api/signalpulse"),
     builder => builder.UseMiddleware<RequestCancellationMiddleware>());

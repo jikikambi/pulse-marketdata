@@ -12,6 +12,8 @@ public sealed class ConfidenceStage(IConfidenceScoringAgent confidenceScoringAge
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {
+        await ctx.EmitAsync(Stage.ToString(), "confidence_started", "Confidence scoring started", null, ct);
+
         var confidence = await confidenceScoringAgent.ScoreAsync(ctx, ct);
 
         ctx.Confidence = confidence;
@@ -19,5 +21,14 @@ public sealed class ConfidenceStage(IConfidenceScoringAgent confidenceScoringAge
         ctx.State.Confidence = confidence;
 
         Logger.LogInformation("ConfidenceScoringAgent evaluated {Symbol}. Score: {Score}, Level: {Level}", ctx.Input.Symbol, confidence.Score, confidence.Level);
+
+        await ctx.EmitAsync(Stage.ToString(),
+            "confidence_scored", confidence.Reason, new
+            {
+                confidence.Score,
+                Level = confidence.Level.ToString()
+            }, ct);
+
+        Logger.LogInformation("Confidence computed for {Symbol}: {Score} ({Level})", ctx.Input.Symbol, confidence.Score, confidence.Level);
     }
 }

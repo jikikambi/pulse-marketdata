@@ -1,13 +1,17 @@
-﻿using MarketData.Adapter.Api.Client.Services;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Transport;
+using MarketData.Adapter.Api.Client.Services;
 using MarketData.Adapter.Shared.AlphaVantage.Request;
 using MarketData.Adapter.Shared.AlphaVantage.Response;
 using MarketData.Adapter.Shared.Mappers;
 using MarketData.Adapter.Shared.Options;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
+using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Persistence;
 using SignalPulse.MarketData.Infrastructure.ReadModels;
 using StackExchange.Redis;
@@ -33,7 +37,7 @@ public static class ServiceCollectionExtensions
             .WithTracing(tracing =>
             {
                 tracing.ConfigureResource(resource =>
-                resource.AddService(serviceName: "PulseMarketData.AgentEngine", serviceVersion: "1.0.0"))                
+                resource.AddService(serviceName: "PulseMarketData.AgentEngine", serviceVersion: "1.0.0"))
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddSource("Microsoft.SemanticKernel")
@@ -107,6 +111,45 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAlphaVantageForexDailyMapper, AlphaVantageForexDailyMapper>();
         services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse>, AlphaVantageQuoteFallbackService>();
         services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageForexDailyRequest, AlphaVantageForexDailyResponse>, AlphaVantageForexFallbackService>();
+    }
+
+    public static IServiceCollection AddElasticSearch(this IServiceCollection services, IConfiguration config)
+    {
+        services.Configure<ElasticOptions>(config.GetSection("Elastic"));
+
+        services.AddSingleton<ElasticsearchClient>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<ElasticOptions>>().Value;
+
+            var settings = new ElasticsearchClientSettings(new Uri(options.Url));
+
+            if (!string.IsNullOrWhiteSpace(options.Username) && !string.IsNullOrWhiteSpace(options.Password))
+            {
+                settings = settings.Authentication(new BasicAuthentication(options.Username, options.Password));
+            }
+
+            settings = settings.DefaultIndex($"{options.IndexPrefix}-{DateTime.UtcNow:yyyy.MM.dd}");
+
+            return new ElasticsearchClient(settings);
+        });
+
+        services.AddSingleton<LoggerWorkflowEventSink>();
+        services.AddSingleton<ElasticWorkflowEventSink>();
+
+        services.AddSingleton<IWorkflowEventSink>(sp =>
+        {
+            var sinks = new IWorkflowEventSink[]
+            {
+                sp.GetRequiredService<LoggerWorkflowEventSink>(),
+                sp.GetRequiredService<ElasticWorkflowEventSink>()
+            };
+
+            return new CompositeWorkflowEventSink(sinks);
+        });
+
+        services.AddSingleton<ElasticIndexInitializer>();
+
+        return services;
     }
 
     static async Task StreamJsonArray<T>(IAsyncEnumerable<T> source, HttpResponse response, CancellationToken ct)

@@ -38,7 +38,7 @@ public static class MarketDataMartenExtensions
             opts.Projections.Add<QuoteProjection>(ProjectionLifecycle.Inline);
             opts.Projections.Add<QuoteInsightProjection>(ProjectionLifecycle.Inline);
             opts.Projections.Add<ForexInsightProjection>(ProjectionLifecycle.Inline);
-        });           
+        });
 
         // --- Repositories ---
         services.AddScoped<IReadModelRepository<QuoteReadModel>, QuoteRepository>();

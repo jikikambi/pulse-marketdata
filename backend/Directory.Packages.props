@@ -24,6 +24,7 @@
     <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.75.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
@@ -33,8 +34,8 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.15.1-beta.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.7" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
-    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.2.3" />
-    <PackageVersion Include="Marten" Version="8.18.3" />
+    <PackageVersion Include="Elastic.Clients.Elasticsearch" Version="9.4.0" />
+    <PackageVersion Include="Marten" Version="8.37.0" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR" Version="1.2.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.3" />

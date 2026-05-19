@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Polly;
-using Polly.Retry;
+using RTools_NTS.Util;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
 using System.Globalization;
+using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
@@ -14,7 +15,7 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
     IAgentStateStore store,
     IAsyncPolicy<string> retryPolicy,
     ILogger<PlannerStage> logger,
-    IWorkflowOutcomeFactory outcomeFactory) 
+    IWorkflowOutcomeFactory outcomeFactory)
     : MarketAgentStageBase<PlannerStage>(logger)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
@@ -29,26 +30,51 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
 
         var cacheKey = $"{input.Symbol}:{normalizedPercent}";
 
-        var cachedPlan = await store.GetPlanCacheAsync(cacheKey);
-
-        if (!string.IsNullOrWhiteSpace(cachedPlan))
+        await ctx.EmitAsync(Stage.ToString(), "planner_started", "Planner stage execution started", new
         {
-            Logger.LogDebug("Planner cache hit for {Symbol}. CacheKey: {CacheKey}", input.Symbol, cacheKey);
-
-            ctx.PlanRaw = cachedPlan;
-            return;
-        }
-
-        Logger.LogDebug("Planner cache miss for {Symbol}. CacheKey: {CacheKey}. Making LLM call...", input.Symbol, cacheKey);
-
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-        cts.CancelAfter(Timeout);
+            CacheKey = cacheKey,
+            input.Symbol,
+            input.ChangePercent
+        }, ct);
 
         try
         {
-            var result = await retryPolicy.ExecuteAsync(async () =>
+            var cachedPlan = await store.GetPlanCacheAsync(cacheKey);
+
+            if (!string.IsNullOrWhiteSpace(cachedPlan))
             {
+                Logger.LogDebug("Planner cache hit for {Symbol}. CacheKey: {CacheKey}", input.Symbol, cacheKey);
+
+                ctx.PlanRaw = cachedPlan;
+
+                await ctx.EmitAsync(Stage.ToString(), "planner_cache_hit", "Using cached planner response", new
+                {
+                    CacheKey = cacheKey
+                }, ct);
+
+                return;
+            }
+
+            await ctx.EmitAsync(Stage.ToString(), "planner_cache_miss", "Planner cache miss", new
+            {
+                CacheKey = cacheKey
+            }, ct);
+
+            Logger.LogDebug("Planner cache miss for {Symbol}. CacheKey: {CacheKey}. Making LLM call...", input.Symbol, cacheKey);
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            cts.CancelAfter(Timeout);
+
+            var policyContext = new Context
+            {
+                ["workflowContext"] = ctx
+            };
+
+            var planRaw = await retryPolicy.ExecuteAsync(async (_, token) =>
+            {
+                await ctx.EmitAsync(Stage.ToString(), "planner_invocation", "Invoking planner model", null, token);
+
                 return await kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, new KernelArguments
                 {
                     ["symbol"] = input.Symbol,
@@ -56,14 +82,18 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
                     ["changePercent"] = input.ChangePercent,
                     ["volume"] = input.Volume,
                     ["correlationId"] = input.CorrelationId
-                }, cts.Token);
-            });
-
-            var planRaw = result.ToString();
+                }, token);
+            }, policyContext, cts.Token);
 
             if (string.IsNullOrWhiteSpace(planRaw))
             {
-                throw new InvalidOperationException($"Planner returned empty response for {input.Symbol}");
+                Logger.LogWarning("Planner returned empty response for {Symbol}", input.Symbol);
+
+                await ctx.EmitAsync(Stage.ToString(), "planner_empty_response", "Planner returned empty response", null, cts.Token);
+
+                ctx.Terminate(outcomeFactory.Safe(ctx, "planner_empty_response"));
+
+                return;
             }
 
             await store.SetPlanCacheAsync(cacheKey, planRaw);
@@ -72,10 +102,46 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
 
             ctx.PlanRaw = planRaw;
             ctx.State.PlanJson = planRaw;
+
+            await ctx.EmitAsync(Stage.ToString(), "planner_cached", "Planner response cached", new
+            {
+                CacheKey = cacheKey
+            }, cts.Token);
+
+            try
+            {
+                var preview = JsonSerializer.Deserialize<PlannerResult>(planRaw, AiJson.Options);
+
+                if (preview is not null)
+                {
+                    await ctx.EmitAsync(Stage.ToString(), "planner_confidence", $"Planner confidence: {preview.Confidence}", new
+                    {
+                        preview.Confidence,
+                        preview.NeedTool,
+                        preview.Tool
+                    }, cts.Token);
+
+                    await ctx.EmitAsync(Stage.ToString(), "planner_tool_decision",
+                        preview.NeedTool ? "Planner requested tool" : "Planner skipped tool", new
+                        {
+                            preview.Tool
+                        }, cts.Token);
+                }
+            }
+            catch
+            {
+                // Ignore parse failures here.
+                // PlanParsingStage owns actual validation.
+            }
+
+            Logger.LogInformation("Planner completed successfully for {Symbol}", input.Symbol);
+
         }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (!ct.IsCancellationRequested)
         {
             Logger.LogWarning("Planner timed out after {TimeoutMs}ms for {Symbol}", Timeout.TotalMilliseconds, input.Symbol);
+
+            await ctx.EmitAsync(Stage.ToString(), "planner_timeout", ex.Message, null, ct);
 
             var fallback = outcomeFactory.Safe(ctx, "planner_timeout");
 
@@ -84,6 +150,11 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
         catch (Exception ex)
         {
             Logger.LogError(ex, "Planner failed for {Symbol}", input.Symbol);
+
+            await ctx.EmitAsync(Stage.ToString(), "planner_failed", ex.Message, new
+            {
+                Exception = ex.GetType().Name
+            }, ct);
 
             var fallback = outcomeFactory.Safe(ctx, "planner_failed");
 

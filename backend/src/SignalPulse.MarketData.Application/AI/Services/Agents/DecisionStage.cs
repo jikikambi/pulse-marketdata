@@ -13,11 +13,19 @@ public sealed class DecisionStage(IFinalDecisionAgent finalDecisionAgent,
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {
+        await ctx.EmitAsync(Stage.ToString(), "decision_started", "Final decision stage started", null, ct);
+
         var decision = await finalDecisionAgent.DecideAsync(ctx, ct);
 
         ctx.FinalDecision = decision;
 
         ctx.State.FinalDecision = decision;
+
+        await ctx.EmitAsync(Stage.ToString(),
+            decision.Outcome == DecisionOutcome.Approved ? "decision_approved" : "decision_rejected", decision.Reason, new
+            {
+                Outcome = decision.Outcome.ToString()
+            }, ct);
 
         if (decision.Outcome != DecisionOutcome.Approved)
         {

@@ -4,7 +4,6 @@ using Microsoft.SemanticKernel;
 using Polly;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Cache;
-using SignalPulse.MarketData.Application.AI.Caching;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Plugins;
 using SignalPulse.MarketData.Application.AI.Policies;
@@ -13,6 +12,7 @@ using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Prompts;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
 using SignalPulse.MarketData.Application.Interfaces;
+using SignalPulse.MarketData.Infrastructure.Elastic;
 namespace SignalPulse.MarketData.Application;
 
 public static class MarketDataSemanticKernelExtentions
@@ -41,7 +41,7 @@ public static class MarketDataSemanticKernelExtentions
         services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IValidatorAgent, ValidatorAgent>();
         services.AddScoped<IConfidenceScoringAgent, ConfidenceScoringAgent>();
-        services.AddScoped<IFinalDecisionAgent, FinalDecisionAgent>();
+        services.AddScoped<IFinalDecisionAgent, FinalDecisionAgent>();        
         services.AddScoped<IWorkflowOutcomeFactory, WorkflowOutcomeFactory>();
         services.AddScoped<IMarketAgentStage, ValidationInputStage>();
         services.AddScoped<IMarketAgentStage, PlannerStage>();

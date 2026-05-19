@@ -1,4 +1,5 @@
 ﻿using SignalPulse.MarketData.Application.AI.Models.Enums;
+using SignalPulse.MarketData.Infrastructure.Elastic;
 using System.Diagnostics;
 
 namespace SignalPulse.MarketData.Application.AI.Models;
@@ -6,6 +7,7 @@ namespace SignalPulse.MarketData.Application.AI.Models;
 public sealed class MarketAgentWorkflowContext
 {
     public required QuoteInsightInput Input { get; init; }
+    public required IWorkflowEventSink EventSink { get; init; }
     public PlannerResult? Plan { get; set; }
     public string? ToolContextJson { get; set; }
     public AIInsightResult? Insight { get; set; }
@@ -21,9 +23,12 @@ public sealed class MarketAgentWorkflowContext
     public Stopwatch Stopwatch { get; } = Stopwatch.StartNew();
     public string CorrelationId => Input.CorrelationId.ToString();
     public string? PlanRaw { get; set; }
+
     public void Terminate(AIInsightResult result)
     {
         FinalResult = result;
+
+        _ = EmitAsync("workflow", "workflow_terminated", result.Rationale, new { result });
     }
 
     public void AddStep(string name, string input, string output)
@@ -32,4 +37,8 @@ public sealed class MarketAgentWorkflowContext
 
         State.UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    // Workflow telemetry
+    public Task EmitAsync(string stage, string type, string message, object? metadata = null, CancellationToken ct = default) =>
+        EventSink.WriteAsync(new WorkflowEvent(Input.CorrelationId, stage, type, message, DateTimeOffset.UtcNow, metadata), ct);
 }

@@ -6,6 +6,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Elastic.Clients.Elasticsearch" />
 		<PackageReference Include="Microsoft.SemanticKernel" />
 		<PackageReference Include="OpenTelemetry.Exporter.Console" />
 		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />

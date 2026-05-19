@@ -1,7 +1,9 @@
-﻿using FakeItEasy;
+﻿using Elastic.Clients.Elasticsearch;
+using FakeItEasy;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Polly;
 using SignalPulse.MarketData.Application.AI;
@@ -11,6 +13,7 @@ using SignalPulse.MarketData.Application.AI.Plugins;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
+using SignalPulse.MarketData.Infrastructure.Elastic;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -26,6 +29,7 @@ public sealed class MarketAgentEnginePerformanceTests
     private readonly IValidatorAgent _validatorAgent = A.Fake<IValidatorAgent>();
     private readonly IConfidenceScoringAgent _confidenceScoringAgent = A.Fake<IConfidenceScoringAgent>();
     private readonly IFinalDecisionAgent _finalDecisionAgent = A.Fake<IFinalDecisionAgent>();
+    private readonly IWorkflowEventSink _eventSink = A.Fake<IWorkflowEventSink>();
 
     private readonly ILogger<MarketAgentEngine> _logger = NullLogger<MarketAgentEngine>.Instance;
 
@@ -755,6 +759,137 @@ public sealed class MarketAgentEnginePerformanceTests
         result.Rationale.Should().Contain("low_confidence");
     }
 
+    [Fact]
+    public async Task RunAsync_ShouldEmitWorkflowEvents()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        SetupSuccessfulPipeline(input);
+
+        var engine = CreateEngine();
+
+        // Act
+        await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+
+        A.CallTo(() => _eventSink.WriteAsync(A<WorkflowEvent>.That.Matches(x =>
+        x.Stage == MarketAgentStage.Planning.ToString() &&
+        x.EventType == "planner_started"), A<CancellationToken>._))
+            .MustHaveHappened();
+
+        A.CallTo(() => _eventSink.WriteAsync(A<WorkflowEvent>.That.Matches(x =>
+        x.Stage == MarketAgentStage.Reasoning.ToString() &&
+        x.EventType == "stage_completed"), A<CancellationToken>._))
+            .MustHaveHappened();
+
+        A.CallTo(() => _eventSink.WriteAsync(A<WorkflowEvent>.That.Matches(x =>
+        x.Stage == MarketAgentStage.Decision.ToString() &&
+        x.EventType == "decision_approved"), A<CancellationToken>._))
+            .MustHaveHappened();
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenValidationFails_ShouldEmitTerminationEvent()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        SetupPlannerAndReasoner(input);
+
+        A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
+            .Returns(new ValidationResult(false, "invalid", ValidationSeverity.High));
+
+        var engine = CreateEngine();
+
+        // Act
+        await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        A.CallTo(() => _eventSink.WriteAsync(A<WorkflowEvent>.That.Matches(x =>
+        x.Stage == "workflow" &&
+        x.EventType == "workflow_terminated" && x.Message.Contains("validation_failed")), A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldPropagateCorrelationIdToWorkflowEvents()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        SetupSuccessfulPipeline(input);
+
+        var engine = CreateEngine();
+
+        // Act
+        await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        A.CallTo(() => _eventSink.WriteAsync(A<WorkflowEvent>.That.Matches(x => x.CorrelationId == input.CorrelationId), A<CancellationToken>._))
+            .MustHaveHappened();
+    }
+
+    [Fact]
+    public async Task RunAsync_ShouldEmitEventsInStageOrder()
+    {
+        // Arrange
+        var input = CreateValidInput();
+
+        SetupSuccessfulPipeline(input);
+
+        var emitted = new List<WorkflowEvent>();
+
+        A.CallTo(() => _eventSink.WriteAsync(A<WorkflowEvent>._, A<CancellationToken>._))
+            .Invokes(call =>
+            {
+                var evt = call.GetArgument<WorkflowEvent>(0);
+
+                evt.Should().NotBeNull();
+
+                emitted.Add(evt!);
+            });
+
+        var engine = CreateEngine();
+
+        // Act
+        await engine.RunAsync(input, CancellationToken.None);
+
+        // Assert
+        emitted.Should().Contain(x => x.Stage == MarketAgentStage.Planning.ToString());
+        emitted.Should().Contain(x => x.Stage == MarketAgentStage.Reasoning.ToString());
+        emitted.Should().Contain(x => x.Stage == MarketAgentStage.Decision.ToString());
+        emitted.FindIndex(x => x.Stage == MarketAgentStage.Planning.ToString()).Should()
+            .BeLessThan(emitted.FindIndex(x => x.Stage == MarketAgentStage.Reasoning.ToString()));
+    }
+
+    [Fact]
+    public async Task ElasticWorkflowEventSink_ShouldIndexDocument()
+    {
+        // Arrange
+        var client = A.Fake<ElasticsearchClient>();
+
+        var options = Options.Create(new ElasticOptions
+        {
+            IndexPrefix = "marketagent"
+        });
+
+        var logger = NullLogger<ElasticWorkflowEventSink>.Instance;
+
+        var sink = new ElasticWorkflowEventSink( client, options, logger);
+
+        var evt = new WorkflowEvent( Guid.NewGuid(), "Planning", "planner_started", "Planner started", DateTimeOffset.UtcNow);
+
+        // Act
+        await sink.WriteAsync(evt, CancellationToken.None);
+
+        // Assert
+        A.CallTo(() => client.IndexAsync(A<WorkflowEventDocument>._, A<Action<IndexRequestDescriptor<WorkflowEventDocument>>>._, A<CancellationToken>._))
+            .MustHaveHappened();
+    }
+
+
     private MarketAgentEngine CreateEngine()
     {
         var outcomeFactory = new WorkflowOutcomeFactory(NullLogger<WorkflowOutcomeFactory>.Instance);
@@ -783,7 +918,7 @@ public sealed class MarketAgentEnginePerformanceTests
         new PersistenceStage( _store,  NullLogger<PersistenceStage>.Instance, outcomeFactory)
         };
 
-        return new MarketAgentEngine(stages, _logger, outcomeFactory);
+        return new MarketAgentEngine(stages, _logger, _eventSink, outcomeFactory);
     }
 
     private static QuoteInsightInput CreateValidInput(

@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Infrastructure.Elastic;
 using System.Diagnostics;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
     ILogger<MarketAgentEngine> logger,
+    IWorkflowEventSink eventSink,
     IWorkflowOutcomeFactory outcomeFactory)
 {
     private readonly IReadOnlyList<IMarketAgentStage> _stages = [.. stages.OrderBy(x => x.Stage)];
@@ -14,13 +16,12 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
     {
         var sw = Stopwatch.StartNew();
 
-        var key = $"agent:{input.Symbol}:{input.CorrelationId}";
-
         logger.LogInformation("Starting market agent workflow for {Symbol}", input.Symbol);
 
         var ctx = new MarketAgentWorkflowContext
         {
             Input = input,
+            EventSink = eventSink,
             State = new MarketAgentState
             {
                 Symbol = input.Symbol,
