@@ -66,10 +66,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .ReturnsNextFromSequence(null, plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input1);
@@ -90,10 +90,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .MustHaveHappenedTwiceExactly();
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .MustHaveHappenedOnceExactly();
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .MustHaveHappenedTwiceExactly();
     }
 
@@ -140,7 +140,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .ThrowsAsync(new OperationCanceledException());
 
         // Act
@@ -153,7 +153,7 @@ public sealed class MarketAgentEnginePerformanceTests
 
         result.Rationale.Should().Contain("planner_timeout");
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .MustNotHaveHappened();
     }
 
@@ -179,7 +179,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
         // Act
@@ -218,7 +218,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("MSFT"))
@@ -276,13 +276,13 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("AAPL"))
             .Returns(toolResult);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>.That.Matches(args => args["context"] != null && args["context"]!.ToString()!.Contains("145")), A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>.That.Matches(args => args["context"] != null && args["context"]!.ToString()!.Contains("145")), A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -332,10 +332,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
@@ -385,10 +385,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
@@ -439,10 +439,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
@@ -498,10 +498,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -548,10 +548,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -622,10 +622,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -721,7 +721,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns("INVALID_JSON");
 
         var engine = CreateEngine();
@@ -939,7 +939,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
     }
 
@@ -970,10 +970,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
             .Returns((string?)null);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(reasonerJson);
     }
 

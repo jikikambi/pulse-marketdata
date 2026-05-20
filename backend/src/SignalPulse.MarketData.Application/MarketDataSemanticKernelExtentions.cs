@@ -9,8 +9,8 @@ using SignalPulse.MarketData.Application.AI.Plugins;
 using SignalPulse.MarketData.Application.AI.Policies;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
-using SignalPulse.MarketData.Application.AI.Services.Prompts;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
+using SignalPulse.MarketData.Application.AI.Skills.Services;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 namespace SignalPulse.MarketData.Application;
@@ -29,11 +29,12 @@ public static class MarketDataSemanticKernelExtentions
 
         bool useMock = configuration.GetValue<bool>("Ai:UseMock");
 
-        services.AddSingleton<QuoteInsightPrompt>();
-        services.AddSingleton<ForexInsightPrompt>();
+        services.AddSingleton<QuoteInsightService>();
+        services.AddSingleton<ForexInsightService>();
         services.AddSingleton<MarketAgentReplayService>();
         services.AddSingleton<MarketAgentDebugger>();
         services.AddScoped<IQuoteInfoTool, QuoteInfoPlugin>();
+        services.AddScoped<ISkillRegistry, SemanticKernelSkillRegistry>();
         services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
 
         services.AddSingleton<IAsyncPolicy<string>>(_ => AiRetryPolicies.Create());

@@ -29,7 +29,7 @@ public sealed class ReasoningStage(IKernelInvoker kernelInvoker,
         {
             var result = await retryPolicy.ExecuteAsync(async () =>
             {
-                return await kernelInvoker.InvokeAsync(AgentConstants.ReasonerFunction, new KernelArguments
+                return await kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, new KernelArguments
                 {
                     ["symbol"] = ctx.Input.Symbol,
                     ["price"] = ctx.Input.Price,

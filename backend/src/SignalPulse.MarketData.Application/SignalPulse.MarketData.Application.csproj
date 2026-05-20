@@ -1,22 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-		<None Remove="AI\Prompts\QuoteInsight\config.json" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Include="AI\Prompts\ForexInsight\config.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-		<Content Include="AI\Prompts\QuoteInsight\skprompt.txt">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-		<Content Include="AI\Prompts\QuoteInsight\config.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="OpenTelemetry.Api" />
 		<PackageReference Include="Polly" />
@@ -28,6 +12,15 @@
 		<ProjectReference Include="..\SignalPulse.MarketData.Infrastructure\SignalPulse.MarketData.Infrastructure.csproj" />
 		<ProjectReference Include="..\SignalPulse.Messaging\SignalPulse.Messaging.csproj" />
 		<ProjectReference Include="..\SignalPulse.Rdm.MarketData\SignalPulse.Rdm.MarketData.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="AI\Skills\MarketPlanner\" />
+	  <Folder Include="AI\Skills\MarketReasoner\" />
+	  <Folder Include="AI\Skills\ForexInsight\" />
+	  <Folder Include="AI\Skills\QuoteInsight\" />
+	  <Folder Include="AI\Skills\ToolSelector\" />
+	  <Folder Include="AI\Skills\ValidationAgent\" />
 	</ItemGroup>
 
 </Project>

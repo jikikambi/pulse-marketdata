@@ -75,7 +75,7 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
             {
                 await ctx.EmitAsync(Stage.ToString(), "planner_invocation", "Invoking planner model", null, token);
 
-                return await kernelInvoker.InvokeAsync(AgentConstants.PlannerFunction, new KernelArguments
+                return await kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, new KernelArguments
                 {
                     ["symbol"] = input.Symbol,
                     ["price"] = input.Price,

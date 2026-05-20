@@ -4,10 +4,13 @@ namespace SignalPulse.MarketData.Application.AI;
 
 public static class AgentConstants
 {
-    public const string PromptPath = "AI/Prompts";
+    public const string SkillsPath = "AI/Skills";
 
-    public const string PlannerFunction = "Planner";
-    public const string ReasonerFunction = "Reasoner";
+    public const string PlannerSkill = "MarketPlanner";
+    public const string ReasonerSkill = "MarketReasoner";
+
+    public const string QuoteInsightSkill = "QuoteInsight";
+    public const string ForexInsightSkill = "ForexInsight";
 
     public const string ToolName = nameof(QuoteInfoPlugin.GetQuoteContextAsync);
 
@@ -17,5 +20,5 @@ public static class AgentConstants
     public const string StepSafe = "safe_fallback";
     public const string StepUnsafe = "unsafe_exit";
     public const string StepRisker = "risker";
-    public const string StepInputValidation = "input_validation";
+    public const string StepInputValidation = "input_validation";    
 }
