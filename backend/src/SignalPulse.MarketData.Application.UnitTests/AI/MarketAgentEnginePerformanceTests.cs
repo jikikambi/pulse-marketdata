@@ -864,34 +864,7 @@ public sealed class MarketAgentEnginePerformanceTests
         emitted.Should().Contain(x => x.Stage == MarketAgentStage.Decision.ToString());
         emitted.FindIndex(x => x.Stage == MarketAgentStage.Planning.ToString()).Should()
             .BeLessThan(emitted.FindIndex(x => x.Stage == MarketAgentStage.Reasoning.ToString()));
-    }
-
-    [Fact]
-    public async Task ElasticWorkflowEventSink_ShouldIndexDocument()
-    {
-        var gateway = A.Fake<IElasticWorkflowIndexGateway>();
-
-        A.CallTo(() => gateway.IndexExistsAsync(A<string>._, A<CancellationToken>._))
-            .Returns(false);
-
-        var policyRegistry = A.Fake<IAiPolicyRegistry>();
-
-        A.CallTo(() => policyRegistry.GetElasticPolicy())
-            .Returns(Policy.NoOpAsync());
-
-        var sink = new ElasticWorkflowEventSink(gateway,
-            Options.Create(new ElasticOptions { IndexPrefix = "marketagent" }),
-            policyRegistry,
-            NullLogger<ElasticWorkflowEventSink>.Instance);
-
-        await sink.WriteAsync(
-            new WorkflowEvent(Guid.NewGuid(), "Planning", "planner_started", "Planner started", DateTimeOffset.UtcNow),
-            CancellationToken.None);
-
-        A.CallTo(() => gateway.IndexAsync(A<WorkflowEventDocument>._, A<string>._, A<CancellationToken>._))
-            .MustHaveHappenedOnceExactly();
-    }
-
+    }  
 
     private MarketAgentEngine CreateEngine()
     {

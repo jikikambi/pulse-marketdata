@@ -6,7 +6,7 @@ using Polly;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Policies;
 
-namespace SignalPulse.MarketData.Application.UnitTests.Elastic;
+namespace SignalPulse.MarketData.Infrastructure.UnitTests.Elastic;
 
 public class ElasticWorkflowEventSinkTests
 {

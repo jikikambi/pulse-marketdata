@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Options;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 
-namespace SignalPulse.MarketData.Application.UnitTests.Elastic;
+namespace SignalPulse.MarketData.Infrastructure.IntegrationTests.Elastic;
 
 public class ElasticIndexInitializerTests
 {
