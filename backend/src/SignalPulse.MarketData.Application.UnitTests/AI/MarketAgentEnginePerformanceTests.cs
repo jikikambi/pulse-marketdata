@@ -1,5 +1,4 @@
-﻿using Elastic.Clients.Elasticsearch;
-using FakeItEasy;
+﻿using FakeItEasy;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,6 +13,7 @@ using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
 using SignalPulse.MarketData.Infrastructure.Elastic;
+using SignalPulse.MarketData.Infrastructure.Policies;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -30,6 +30,7 @@ public sealed class MarketAgentEnginePerformanceTests
     private readonly IConfidenceScoringAgent _confidenceScoringAgent = A.Fake<IConfidenceScoringAgent>();
     private readonly IFinalDecisionAgent _finalDecisionAgent = A.Fake<IFinalDecisionAgent>();
     private readonly IWorkflowEventSink _eventSink = A.Fake<IWorkflowEventSink>();
+    private readonly IAiPolicyRegistry _policyRegistry = A.Fake<IAiPolicyRegistry>();
 
     private readonly ILogger<MarketAgentEngine> _logger = NullLogger<MarketAgentEngine>.Instance;
 
@@ -282,7 +283,8 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("AAPL"))
             .Returns(toolResult);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>.That.Matches(args => args["context"] != null && args["context"]!.ToString()!.Contains("145")), A<CancellationToken>._))
+        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>
+            .That.Matches(args => args.ContainsName("context") && args["context"] != null && args["context"]!.ToString()!.Contains("145")), A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -867,31 +869,34 @@ public sealed class MarketAgentEnginePerformanceTests
     [Fact]
     public async Task ElasticWorkflowEventSink_ShouldIndexDocument()
     {
-        // Arrange
-        var client = A.Fake<ElasticsearchClient>();
+        var gateway = A.Fake<IElasticWorkflowIndexGateway>();
 
-        var options = Options.Create(new ElasticOptions
-        {
-            IndexPrefix = "marketagent"
-        });
+        A.CallTo(() => gateway.IndexExistsAsync(A<string>._, A<CancellationToken>._))
+            .Returns(false);
 
-        var logger = NullLogger<ElasticWorkflowEventSink>.Instance;
+        var policyRegistry = A.Fake<IAiPolicyRegistry>();
 
-        var sink = new ElasticWorkflowEventSink( client, options, logger);
+        A.CallTo(() => policyRegistry.GetElasticPolicy())
+            .Returns(Policy.NoOpAsync());
 
-        var evt = new WorkflowEvent( Guid.NewGuid(), "Planning", "planner_started", "Planner started", DateTimeOffset.UtcNow);
+        var sink = new ElasticWorkflowEventSink(gateway,
+            Options.Create(new ElasticOptions { IndexPrefix = "marketagent" }),
+            policyRegistry,
+            NullLogger<ElasticWorkflowEventSink>.Instance);
 
-        // Act
-        await sink.WriteAsync(evt, CancellationToken.None);
+        await sink.WriteAsync(
+            new WorkflowEvent(Guid.NewGuid(), "Planning", "planner_started", "Planner started", DateTimeOffset.UtcNow),
+            CancellationToken.None);
 
-        // Assert
-        A.CallTo(() => client.IndexAsync(A<WorkflowEventDocument>._, A<Action<IndexRequestDescriptor<WorkflowEventDocument>>>._, A<CancellationToken>._))
-            .MustHaveHappened();
+        A.CallTo(() => gateway.IndexAsync(A<WorkflowEventDocument>._, A<string>._, A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
     }
 
 
     private MarketAgentEngine CreateEngine()
     {
+        SetupPolicies();
+
         var outcomeFactory = new WorkflowOutcomeFactory(NullLogger<WorkflowOutcomeFactory>.Instance);
 
         var stages = new IMarketAgentStage[]
@@ -899,13 +904,13 @@ public sealed class MarketAgentEnginePerformanceTests
 
         new ValidationInputStage( NullLogger<ValidationInputStage>.Instance, outcomeFactory),
 
-        new PlannerStage( _kernelInvoker, _store, Policy.NoOpAsync<string>(), NullLogger<PlannerStage>.Instance, outcomeFactory),
+        new PlannerStage( _kernelInvoker, _store, _policyRegistry, NullLogger<PlannerStage>.Instance, outcomeFactory),
 
         new PlanParsingStage(  NullLogger<PlanParsingStage>.Instance, outcomeFactory),
 
         new ToolStage( _quoteTool,  NullLogger<ToolStage>.Instance, outcomeFactory),
 
-        new ReasoningStage( _kernelInvoker, Policy.NoOpAsync<string>(),  NullLogger<ReasoningStage>.Instance,  outcomeFactory),
+        new ReasoningStage( _kernelInvoker, _policyRegistry,  NullLogger<ReasoningStage>.Instance,  outcomeFactory),
 
         new ValidationStage( _validatorAgent, NullLogger<ValidationStage>.Instance, outcomeFactory),
 
@@ -990,6 +995,20 @@ public sealed class MarketAgentEnginePerformanceTests
 
         A.CallTo(() => _finalDecisionAgent.DecideAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
             .Returns(new FinalDecisionResult(DecisionOutcome.Approved, "approved"));
+    }
+
+    private void SetupPolicies()
+    {
+        var passthroughPolicy = Policy<string>.Handle<Exception>().RetryAsync(0);
+
+        A.CallTo(() => _policyRegistry.GetPlannerPolicy())
+            .Returns(passthroughPolicy);
+
+        A.CallTo(() => _policyRegistry.GetReasonerPolicy())
+            .Returns(passthroughPolicy);
+
+        A.CallTo(() => _policyRegistry.GetElasticPolicy())
+            .Returns(Policy.Handle<Exception>().RetryAsync(0));
     }
 
     private void SetupSuccessfulPipeline(QuoteInsightInput input)

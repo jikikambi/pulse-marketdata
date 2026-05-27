@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Polly;
-using RTools_NTS.Util;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
+using SignalPulse.MarketData.Infrastructure.Policies;
 using System.Globalization;
 using System.Text.Json;
 
@@ -13,7 +13,7 @@ namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class PlannerStage(IKernelInvoker kernelInvoker,
     IAgentStateStore store,
-    IAsyncPolicy<string> retryPolicy,
+    IAiPolicyRegistry policyRegistry,
     ILogger<PlannerStage> logger,
     IWorkflowOutcomeFactory outcomeFactory)
     : MarketAgentStageBase<PlannerStage>(logger)
@@ -68,8 +68,10 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
 
             var policyContext = new Context
             {
-                ["workflowContext"] = ctx
+                ["emitter"] = ctx
             };
+
+            var retryPolicy = policyRegistry.GetPlannerPolicy();
 
             var planRaw = await retryPolicy.ExecuteAsync(async (_, token) =>
             {

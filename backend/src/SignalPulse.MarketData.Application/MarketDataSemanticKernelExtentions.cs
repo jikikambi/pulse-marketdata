@@ -1,18 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using Polly;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Plugins;
-using SignalPulse.MarketData.Application.AI.Policies;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
 using SignalPulse.MarketData.Application.AI.Skills.Services;
 using SignalPulse.MarketData.Application.Interfaces;
-using SignalPulse.MarketData.Infrastructure.Elastic;
+using SignalPulse.MarketData.Infrastructure.Policies;
 namespace SignalPulse.MarketData.Application;
 
 public static class MarketDataSemanticKernelExtentions
@@ -29,15 +27,15 @@ public static class MarketDataSemanticKernelExtentions
 
         bool useMock = configuration.GetValue<bool>("Ai:UseMock");
 
-        services.AddSingleton<QuoteInsightService>();
-        services.AddSingleton<ForexInsightService>();
+        services.AddScoped<QuoteInsightService>();
+        services.AddScoped<ForexInsightService>();
         services.AddSingleton<MarketAgentReplayService>();
         services.AddSingleton<MarketAgentDebugger>();
         services.AddScoped<IQuoteInfoTool, QuoteInfoPlugin>();
         services.AddScoped<ISkillRegistry, SemanticKernelSkillRegistry>();
         services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
 
-        services.AddSingleton<IAsyncPolicy<string>>(_ => AiRetryPolicies.Create());
+        services.AddSingleton<IAiPolicyRegistry, AiPolicyRegistry>();
 
         services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IValidatorAgent, ValidatorAgent>();

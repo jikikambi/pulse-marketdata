@@ -1,10 +1,11 @@
 ﻿using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Infrastructure.Elastic;
+using SignalPulse.MarketData.Infrastructure.Policies.Contracts;
 using System.Diagnostics;
 
 namespace SignalPulse.MarketData.Application.AI.Models;
 
-public sealed class MarketAgentWorkflowContext
+public sealed class MarketAgentWorkflowContext : IPolicyEventEmitter
 {
     public required QuoteInsightInput Input { get; init; }
     public required IWorkflowEventSink EventSink { get; init; }

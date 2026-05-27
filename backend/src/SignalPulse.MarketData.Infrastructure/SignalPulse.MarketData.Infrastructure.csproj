@@ -3,6 +3,8 @@
 	<ItemGroup>
 		<PackageReference Include="Elastic.Clients.Elasticsearch" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR" />
+		<PackageReference Include="Polly" />
+		<PackageReference Include="Scrutor" />
 	</ItemGroup>
 
 	<ItemGroup>

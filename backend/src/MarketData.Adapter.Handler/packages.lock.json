@@ -364,6 +364,11 @@
           "OpenAI": "2.10.0"
         }
       },
+      "Microsoft.Extensions.DependencyModel": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "RFYJR7APio/BiqdQunRq6DB+nDB6nc2qhHr77mlvZ0q0BT8PubMXN7XicmfzCbrDE/dzhBnUKBRXLTcqUiZDGg=="
+      },
       "Microsoft.Extensions.VectorData.Abstractions": {
         "type": "Transitive",
         "resolved": "10.1.0",
@@ -673,6 +678,8 @@
         "type": "Project",
         "dependencies": {
           "Elastic.Clients.Elasticsearch": "[9.4.0, )",
+          "Polly": "[8.6.6, )",
+          "Scrutor": "[7.0.0, )",
           "SignalPulse.MarketData.Contracts": "[1.0.0, )",
           "SignalPulse.MarketData.Domain": "[1.0.0, )",
           "SignalPulse.Persistence": "[1.0.0, )"
@@ -826,6 +833,15 @@
         "contentHash": "lv9vBbPaOZ6PARmWLkB3v+wBqoBDiI5ROS5KTbJEAAXMVaPG5V+AdjNmU+8NFkztZzJRqujREqmY69w7afRhJA==",
         "dependencies": {
           "Refit": "9.0.2"
+        }
+      },
+      "Scrutor": {
+        "type": "CentralTransitive",
+        "requested": "[7.0.0, )",
+        "resolved": "7.0.0",
+        "contentHash": "wHWaroody48jnlLoq/REwUltIFLxplXyHTP+sttrc8P7+jkiVqf38afDidJNv4qgD/6zz2NKOYg06xLZ1bG7wQ==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyModel": "10.0.0"
         }
       },
       "StackExchange.Redis": {

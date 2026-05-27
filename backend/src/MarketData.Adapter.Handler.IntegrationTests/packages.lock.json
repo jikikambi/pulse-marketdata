@@ -580,6 +580,11 @@
           "Microsoft.Extensions.FileProviders.Physical": "10.0.0"
         }
       },
+      "Microsoft.Extensions.DependencyModel": {
+        "type": "Transitive",
+        "resolved": "10.0.0",
+        "contentHash": "RFYJR7APio/BiqdQunRq6DB+nDB6nc2qhHr77mlvZ0q0BT8PubMXN7XicmfzCbrDE/dzhBnUKBRXLTcqUiZDGg=="
+      },
       "Microsoft.Extensions.Diagnostics": {
         "type": "Transitive",
         "resolved": "10.0.0",
@@ -1190,6 +1195,8 @@
         "dependencies": {
           "Elastic.Clients.Elasticsearch": "[9.4.0, )",
           "Microsoft.AspNetCore.SignalR": "[1.2.9, )",
+          "Polly": "[8.6.6, )",
+          "Scrutor": "[7.0.0, )",
           "SignalPulse.MarketData.Contracts": "[1.0.0, )",
           "SignalPulse.MarketData.Domain": "[1.0.0, )",
           "SignalPulse.Persistence": "[1.0.0, )"
@@ -1609,6 +1616,16 @@
         "dependencies": {
           "Microsoft.Extensions.Http": "9.0.3",
           "Refit": "9.0.2"
+        }
+      },
+      "Scrutor": {
+        "type": "CentralTransitive",
+        "requested": "[7.0.0, )",
+        "resolved": "7.0.0",
+        "contentHash": "wHWaroody48jnlLoq/REwUltIFLxplXyHTP+sttrc8P7+jkiVqf38afDidJNv4qgD/6zz2NKOYg06xLZ1bG7wQ==",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
+          "Microsoft.Extensions.DependencyModel": "10.0.0"
         }
       },
       "StackExchange.Redis": {

@@ -1,57 +1,50 @@
 ﻿using Elastic.Clients.Elasticsearch;
-using FluentAssertions;
+using FakeItEasy;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Polly;
 using SignalPulse.MarketData.Infrastructure.Elastic;
+using SignalPulse.MarketData.Infrastructure.Policies;
 
 namespace SignalPulse.MarketData.Application.UnitTests.Elastic;
 
 public class ElasticWorkflowEventSinkTests
 {
-    private const string ElasticUrl = "http://localhost:9200";
-
     [Fact]
-    public async Task WriteAsync_Should_Index_WorkflowEvent_Successfully2()
+    public async Task WriteAsync_Should_Index_WorkflowEvent_Successfully()
     {
         // Arrange
         var indexPrefix = $"test-events-{Guid.NewGuid():N}";
+        var indexName = $"{indexPrefix}-{DateTime.UtcNow:yyyy.MM.dd}";
 
-        var actualIndexName = $"{indexPrefix}-{DateTime.UtcNow:yyyy.MM.dd}";
+        var gateway = A.Fake<IElasticWorkflowIndexGateway>();
 
-        var settings = new ElasticsearchClientSettings(new Uri(ElasticUrl));
+        A.CallTo(() => gateway.IndexExistsAsync(indexName, A<CancellationToken>._))
+            .Returns(false);
 
-        var client = new ElasticsearchClient(settings);
+        A.CallTo(() => gateway.IndexAsync(  A<WorkflowEventDocument>._, indexName, A<CancellationToken>._))
+            .Returns(new IndexResponse()); 
 
-        var sink = new ElasticWorkflowEventSink(client,
-            Options.Create(new ElasticOptions
-            {
-                Url = ElasticUrl,
-                IndexPrefix = indexPrefix
-            }),
+        var policyRegistry = A.Fake<IAiPolicyRegistry>();
+
+        A.CallTo(() => policyRegistry.GetElasticPolicy())
+            .Returns(Policy.NoOpAsync());
+
+        var sink = new ElasticWorkflowEventSink( gateway,
+            Options.Create(new ElasticOptions { IndexPrefix = indexPrefix }),
+            policyRegistry,
             NullLogger<ElasticWorkflowEventSink>.Instance);
 
-        var evt = new WorkflowEvent(Guid.NewGuid(), "Planning", "stage_started", "unit test event", DateTimeOffset.UtcNow, new Dictionary<string, object>
-        {
-            ["Symbol"] = "AAPL"
-        });
+        var evt = new WorkflowEvent( Guid.NewGuid(), 
+            "Planning", "stage_started", "unit test event", 
+            DateTimeOffset.UtcNow, 
+            new Dictionary<string, object> { ["Symbol"] = "AAPL" });
 
         // Act
         await sink.WriteAsync(evt, CancellationToken.None);
 
-        await client.Indices.RefreshAsync(actualIndexName);
-
-        var response = await client.SearchAsync<WorkflowEventDocument>(s => s
-        .Indices(actualIndexName)
-        .Query(q => q.Term(t => t.Field(f => f.EventType).Value("stage_started"))));
-
         // Assert
-        response.IsValidResponse.Should().BeTrue( because: response.DebugInformation);
-        response.Documents.Should().NotBeEmpty();
-
-        var document = response.Documents.First();
-
-        document.Stage.Should().Be("Planning");
-        document.EventType.Should().Be("stage_started");
-        document.Message.Should().Be("unit test event");
+        A.CallTo(() => gateway.IndexAsync( A<WorkflowEventDocument>._, indexName, A<CancellationToken>._))
+            .MustHaveHappenedOnceExactly();
     }
 }

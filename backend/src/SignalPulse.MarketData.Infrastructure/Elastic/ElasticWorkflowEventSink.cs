@@ -1,26 +1,26 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
+using SignalPulse.MarketData.Infrastructure.Policies;
 
 namespace SignalPulse.MarketData.Infrastructure.Elastic;
 
-public sealed class ElasticWorkflowEventSink(ElasticsearchClient client,
+public sealed class ElasticWorkflowEventSink(IElasticWorkflowIndexGateway gateway,
     IOptions<ElasticOptions> options,
+    IAiPolicyRegistry policyRegistry,
     ILogger<ElasticWorkflowEventSink> logger)
     : IWorkflowEventSink
 {
+    private readonly IAsyncPolicy _policy = policyRegistry.GetElasticPolicy();
+
     public async Task WriteAsync(WorkflowEvent evt, CancellationToken ct)
     {
         try
         {
             var indexName = $"{options.Value.IndexPrefix}-{DateTime.UtcNow:yyyy.MM.dd}";
 
-            var exists = await client.Indices.ExistsAsync(indexName, ct);
-
-            if (exists.Exists)
-            {
-                return;
-            }
+            if (await gateway.IndexExistsAsync(indexName, ct)) return;
 
             var doc = new WorkflowEventDocument
             {
@@ -32,16 +32,20 @@ public sealed class ElasticWorkflowEventSink(ElasticsearchClient client,
                 Metadata = evt.Metadata
             };
 
-            var response = await client.IndexAsync(doc, i => i.Index(indexName), ct);
+            await _policy.ExecuteAsync(async token =>
+            {
 
-            if (!response.IsValidResponse)
-            {
-                logger.LogError("Failed to index workflow event. Error: {Error}", response.ElasticsearchServerError);
-            }
-            else
-            {
-                logger.LogInformation("Indexed workflow event into {Index}", indexName);
-            }
+                var response = await gateway.IndexAsync(doc, indexName, token);
+
+                if (!response.IsValidResponse)
+                {
+                    logger.LogError("Failed to index workflow event. Error: {Error}", response.ElasticsearchServerError);
+                }
+                else
+                {
+                    logger.LogInformation("Indexed workflow event into {Index}", indexName);
+                }
+            }, ct);
         }
         catch (Exception ex)
         {

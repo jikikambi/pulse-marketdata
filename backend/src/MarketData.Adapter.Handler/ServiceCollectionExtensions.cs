@@ -133,6 +133,7 @@ public static class ServiceCollectionExtensions
             return new ElasticsearchClient(settings);
         });
 
+        services.AddSingleton<IElasticWorkflowIndexGateway, ElasticWorkflowIndexGateway>();
         services.AddSingleton<LoggerWorkflowEventSink>();
         services.AddSingleton<ElasticWorkflowEventSink>();
 

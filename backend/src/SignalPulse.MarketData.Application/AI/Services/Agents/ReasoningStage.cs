@@ -4,12 +4,13 @@ using Polly;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
+using SignalPulse.MarketData.Infrastructure.Policies;
 using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class ReasoningStage(IKernelInvoker kernelInvoker,
-    IAsyncPolicy<string> retryPolicy,
+   IAiPolicyRegistry policyRegistry,
     ILogger<ReasoningStage> logger, IWorkflowOutcomeFactory outcomeFactory)
     : MarketAgentStageBase<ReasoningStage>(logger)
 {
@@ -27,6 +28,8 @@ public sealed class ReasoningStage(IKernelInvoker kernelInvoker,
 
         try
         {
+            var retryPolicy = policyRegistry.GetPlannerPolicy();
+
             var result = await retryPolicy.ExecuteAsync(async () =>
             {
                 return await kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, new KernelArguments

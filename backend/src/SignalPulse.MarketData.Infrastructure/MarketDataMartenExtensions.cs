@@ -42,6 +42,7 @@ public static class MarketDataMartenExtensions
 
         // --- Repositories ---
         services.AddScoped<IReadModelRepository<QuoteReadModel>, QuoteRepository>();
+        services.Decorate<IReadModelRepository<QuoteReadModel>, ResilientQuoteReadRepository>();
         services.AddScoped<IReadModelRepository<QuoteInsightReadModel>, QuoteInsightRepository>();
         services.AddScoped<IReadModelRepository<ForexInsightReadModel>, ForexInsightRepository>();
 
