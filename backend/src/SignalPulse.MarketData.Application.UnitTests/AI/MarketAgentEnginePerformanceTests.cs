@@ -31,6 +31,7 @@ public sealed class MarketAgentEnginePerformanceTests
     private readonly IFinalDecisionAgent _finalDecisionAgent = A.Fake<IFinalDecisionAgent>();
     private readonly IWorkflowEventSink _eventSink = A.Fake<IWorkflowEventSink>();
     private readonly IAiPolicyRegistry _policyRegistry = A.Fake<IAiPolicyRegistry>();
+    private readonly IMarketStageOrchestrator _orchestrator = A.Fake<IMarketStageOrchestrator>();
 
     private readonly ILogger<MarketAgentEngine> _logger = NullLogger<MarketAgentEngine>.Instance;
 
@@ -864,7 +865,7 @@ public sealed class MarketAgentEnginePerformanceTests
         emitted.Should().Contain(x => x.Stage == MarketAgentStage.Decision.ToString());
         emitted.FindIndex(x => x.Stage == MarketAgentStage.Planning.ToString()).Should()
             .BeLessThan(emitted.FindIndex(x => x.Stage == MarketAgentStage.Reasoning.ToString()));
-    }  
+    }
 
     private MarketAgentEngine CreateEngine()
     {
@@ -896,7 +897,7 @@ public sealed class MarketAgentEnginePerformanceTests
         new PersistenceStage( _store,  NullLogger<PersistenceStage>.Instance, outcomeFactory)
         };
 
-        return new MarketAgentEngine(stages, _logger, _eventSink, outcomeFactory);
+        return new MarketAgentEngine(stages, _logger, _eventSink, outcomeFactory, _policyRegistry, _orchestrator);
     }
 
     private static QuoteInsightInput CreateValidInput(
@@ -972,7 +973,7 @@ public sealed class MarketAgentEnginePerformanceTests
 
     private void SetupPolicies()
     {
-        var passthroughPolicy = Policy<string>.Handle<Exception>().RetryAsync(0);
+        var passthroughPolicy = Policy.Handle<Exception>().RetryAsync(0);
 
         A.CallTo(() => _policyRegistry.GetPlannerPolicy())
             .Returns(passthroughPolicy);
@@ -980,8 +981,30 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _policyRegistry.GetReasonerPolicy())
             .Returns(passthroughPolicy);
 
+        A.CallTo(() => _policyRegistry.GetToolingPolicy())
+        .Returns(passthroughPolicy);
+
+        A.CallTo(() => _policyRegistry.GetValidationPolicy())
+            .Returns(passthroughPolicy);
+
+        A.CallTo(() => _policyRegistry.GetDecisionPolicy())
+            .Returns(passthroughPolicy);
+
         A.CallTo(() => _policyRegistry.GetElasticPolicy())
             .Returns(Policy.Handle<Exception>().RetryAsync(0));
+
+        A.CallTo(() => _policyRegistry.GetDataAccessPolicy())
+        .Returns(Policy.Handle<Exception>().RetryAsync(0));
+
+        A.CallTo(() => _orchestrator.EvaluateExecutionAsync(A<MarketAgentWorkflowContext>._, A<IMarketAgentStage>._, A<CancellationToken>._))
+            .Returns(new StageExecutionDecision(Execute: true));
+
+        A.CallTo(() => _orchestrator.HandleFailureAsync(A<MarketAgentWorkflowContext>._, A<IMarketAgentStage>._, A<Exception>._, A<CancellationToken>._))
+            .Returns(new StageFailureAction(
+                ContinueWorkflow: false,
+                RetryStage: false,
+                UseFallback: false,
+                TerminateWorkflow: true));
     }
 
     private void SetupSuccessfulPipeline(QuoteInsightInput input)

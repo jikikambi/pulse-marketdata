@@ -24,7 +24,7 @@ public sealed class MarketAgentWorkflowContext : IPolicyEventEmitter
     public Stopwatch Stopwatch { get; } = Stopwatch.StartNew();
     public string CorrelationId => Input.CorrelationId.ToString();
     public string? PlanRaw { get; set; }
-
+    
     public void Terminate(AIInsightResult result)
     {
         FinalResult = result;

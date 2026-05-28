@@ -9,6 +9,8 @@ public sealed class MarketAgentState
     public string? FinalResultJson { get; set; }
     public bool ToolUsed { get; set; }
     public bool Completed { get; set; }
+    public bool IsDegradedMode { get; set; }
+    public int RetryCount { get; set; }
     public DateTimeOffset StartedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
