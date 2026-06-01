@@ -82,7 +82,6 @@ public sealed class AiPolicyRegistry(ILogger<AiPolicyRegistry> logger)
                         {
                             logger.LogError(ex, "Emitter failed during retry event");
                         }
-
                     }
                 });
 

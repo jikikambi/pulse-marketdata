@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using OpenTelemetry.Trace;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
 using System.Diagnostics;
@@ -10,10 +9,11 @@ namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 public abstract class MarketAgentStageBase<TStage>(ILogger<TStage> logger) : IMarketAgentStage
 {
     private static readonly ActivitySource ActivitySource = new("SignalPulse.MarketAgent");
-
     private static readonly Meter Meter = new("SignalPulse.MarketAgent");
-
     private static readonly Histogram<double> StageDuration = Meter.CreateHistogram<double>("marketagent.stage.duration");
+    private static readonly Counter<long> StageSuccessCounter = Meter.CreateCounter<long>("marketagent.stage.success");
+    private static readonly Counter<long> StageFailureCounter = Meter.CreateCounter<long>("marketagent.stage.failure");
+    private static readonly Counter<long> StageDegradedCounter = Meter.CreateCounter<long>("marketagent.stage.degraded");
 
     protected readonly ILogger<TStage> Logger = logger;
     public abstract MarketAgentStage Stage { get; }
@@ -26,11 +26,12 @@ public abstract class MarketAgentStageBase<TStage>(ILogger<TStage> logger) : IMa
 
         using var activity = ActivitySource.StartActivity($"MarketAgent.{Stage}", ActivityKind.Internal);
 
-        activity?.SetTag("market.symbol", ctx.Input.Symbol);
         activity?.SetTag("market.stage", Stage.ToString());
-        activity?.SetTag("correlation.id", ctx.Input.CorrelationId);
-        activity?.SetTag("has_tool", ctx.State.ToolUsed);
-        activity?.SetTag("agent.terminated", ctx.IsTerminated);
+        activity?.SetTag("workflow.symbol", ctx.Input.Symbol);
+        activity?.SetTag("workflow.correlation_id", ctx.Input.CorrelationId);
+        activity?.SetTag("workflow.degraded_mode", ctx.State.IsDegradedMode);
+        activity?.SetTag("workflow.retry_count", ctx.State.RetryCount);
+        activity?.SetTag("workflow.tool_used", ctx.State.ToolUsed);
 
         try
         {
@@ -47,12 +48,26 @@ public abstract class MarketAgentStageBase<TStage>(ILogger<TStage> logger) : IMa
 
             StageDuration.Record(sw.Elapsed.TotalMilliseconds, new TagList
             {
+                { "stage", Stage.ToString() },
+                { "status", "success" }
+            });
+
+            StageSuccessCounter.Add(1, new TagList
+            {
                 { "stage", Stage.ToString() }
             });
 
-            activity?.SetStatus(ActivityStatusCode.Ok);
+            if (ctx.State.IsDegradedMode)
+            {
+                StageDegradedCounter.Add(1, new TagList
+                {
+                    { "stage", Stage.ToString() }
+                });
+            }
 
-            activity?.SetTag("duration.ms", sw.ElapsedMilliseconds);
+            activity?.SetTag("stage.duration_ms", sw.ElapsedMilliseconds);
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
 
             ctx.StageResults.Add(new StageExecutionResult(Stage.ToString(), true, sw.ElapsedMilliseconds, null, started, DateTimeOffset.UtcNow));
 
@@ -70,6 +85,13 @@ public abstract class MarketAgentStageBase<TStage>(ILogger<TStage> logger) : IMa
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
 
             activity?.AddException(ex);
+
+            activity?.SetTag("stage.exception_type", ex.GetType().Name);
+
+            StageFailureCounter.Add(1, new TagList
+            {
+                { "stage", Stage.ToString() }
+            });
 
             StageDuration.Record(sw.Elapsed.TotalMilliseconds, new TagList
             {

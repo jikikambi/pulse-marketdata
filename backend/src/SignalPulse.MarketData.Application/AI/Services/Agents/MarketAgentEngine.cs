@@ -5,6 +5,7 @@ using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Policies;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
@@ -15,6 +16,11 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
     IAiPolicyRegistry policyRegistry,
     IMarketStageOrchestrator orchestrator)
 {
+    private static readonly ActivitySource ActivitySource = new("SignalPulse.MarketAgent");
+    private static readonly Meter Meter = new("SignalPulse.MarketAgent");
+    private static readonly Histogram<double> WorkflowDuration = Meter.CreateHistogram<double>("marketagent.workflow.duration");
+    private static readonly Counter<long> WorkflowCompleted = Meter.CreateCounter<long>("marketagent.workflow.completed");
+    private static readonly Counter<long> WorkflowFailed = Meter.CreateCounter<long>("marketagent.workflow.failed");
     private readonly IAiPolicyRegistry _policyRegistry = policyRegistry;
 
     private readonly IReadOnlyList<IMarketAgentStage> _stages = [.. stages.OrderBy(x => x.Stage)];
@@ -22,6 +28,13 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
     public async Task<AIInsightResult> RunAsync(QuoteInsightInput input, CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
+
+        using var workflowActivity = ActivitySource.StartActivity("MarketAgent.Workflow", ActivityKind.Internal);
+
+        workflowActivity?.SetTag("workflow.symbol", input.Symbol);
+        workflowActivity?.SetTag("workflow.correlation_id", input.CorrelationId);
+        workflowActivity?.SetTag("workflow.started_at", DateTimeOffset.UtcNow);
+
 
         logger.LogInformation("Starting market agent workflow for {Symbol}", input.Symbol);
 
@@ -57,6 +70,8 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
                 {
                     logger.LogInformation("Skipping stage {Stage}. Reason: {Reason}", stage.Stage, decision.Reason);
 
+                    workflowActivity?.AddEvent(new ActivityEvent($"stage_skipped:{stage.Stage}"));
+
                     continue;
                 }
 
@@ -88,6 +103,8 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
                         {
                             logger.LogWarning("Executing fallback stage {FallbackStage}", failure.FallbackStage);
 
+                            workflowActivity?.AddEvent(new ActivityEvent($"fallback:{failure.FallbackStage}"));
+
                             await fallback.ExecuteAsync(ctx, ct);
 
                             continue;
@@ -96,6 +113,17 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
                     if (failure.TerminateWorkflow)
                     {
+                        sw.Stop();
+
+                        workflowActivity?.SetStatus(ActivityStatusCode.Error, failure.Reason);
+
+                        WorkflowFailed.Add(1, new TagList
+                        {
+                            { "reason", "stage_failure" }
+                        });
+
+                        WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
+
                         logger.LogCritical(ex, "Workflow terminating after stage failure");
 
                         return outcomeFactory.Safe(ctx, failure.Reason ?? "workflow_failure");
@@ -107,6 +135,20 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
             sw.Stop();
 
+            workflowActivity?.SetTag("workflow.duration_ms", sw.ElapsedMilliseconds);
+
+            workflowActivity?.SetTag("workflow.stage_count", ctx.StageResults.Count);
+
+            workflowActivity?.SetTag("workflow.degraded_mode", ctx.State.IsDegradedMode);
+
+            workflowActivity?.SetTag("workflow.retry_count", ctx.State.RetryCount);
+
+            workflowActivity?.SetStatus(ActivityStatusCode.Ok);
+
+            WorkflowCompleted.Add(1);
+
+            WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
+
             logger.LogInformation("Workflow completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
 
             return ctx.FinalResult ?? ctx.Insight ?? throw new InvalidOperationException($"Workflow completed without result for {input.Symbol}");
@@ -114,6 +156,17 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
         catch (Exception ex)
         {
             sw.Stop();
+
+            workflowActivity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+
+            workflowActivity?.AddException(ex);
+
+            WorkflowFailed.Add(1, new TagList
+            {
+                { "reason", "unhandled_exception" }
+            });
+
+            WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
 
             logger.LogCritical(ex, "Unhandled workflow failure for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
 

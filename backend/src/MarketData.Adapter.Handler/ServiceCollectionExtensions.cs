@@ -31,19 +31,31 @@ public static class ServiceCollectionExtensions
         {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
+            logging.ParseStateValues = true;
         });
 
         builder.Services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(serviceName: "PulseMarketData.AgentEngine", serviceVersion: "1.0.0"))
             .WithTracing(tracing =>
             {
-                tracing.ConfigureResource(resource =>
-                resource.AddService(serviceName: "PulseMarketData.AgentEngine", serviceVersion: "1.0.0"))
+                tracing.SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(0.1)))
+                .AddSource("SignalPulse.MarketAgent")
+                .AddSource("Microsoft.SemanticKernel")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
-                .AddSource("Microsoft.SemanticKernel")
                 .AddRedisInstrumentation(connection)
+                .AddOtlpExporter()
                 .AddConsoleExporter();
-            });
+            })
+             .WithMetrics(metrics =>
+             {
+                 metrics
+                 .AddMeter("SignalPulse.MarketAgent")
+                 .AddRuntimeInstrumentation()
+                 .AddAspNetCoreInstrumentation()
+                 .AddHttpClientInstrumentation()
+                 .AddPrometheusExporter();
+             });
 
         return builder;
     }

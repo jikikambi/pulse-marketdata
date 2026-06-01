@@ -1,5 +1,4 @@
-﻿using Elastic.Clients.Elasticsearch;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using SignalPulse.MarketData.Infrastructure.Policies;
