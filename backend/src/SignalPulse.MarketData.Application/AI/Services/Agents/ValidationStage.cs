@@ -10,6 +10,7 @@ public sealed class ValidationStage(IValidatorAgent validatorAgent,
     : MarketAgentStageBase<ValidationStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.Validation;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.Reasoning];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {
@@ -45,5 +46,5 @@ public sealed class ValidationStage(IValidatorAgent validatorAgent,
         }
 
         Logger.LogInformation("Validation passed for {Symbol}", ctx.Input.Symbol);
-    }
+    }   
 }

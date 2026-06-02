@@ -11,6 +11,7 @@ public sealed class PersistenceStage(IAgentStateStore store,
     : MarketAgentStageBase<PersistenceStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.Persistence;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.Decision];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

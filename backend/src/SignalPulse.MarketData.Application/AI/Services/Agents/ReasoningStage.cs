@@ -17,6 +17,7 @@ public sealed class ReasoningStage(IKernelInvoker kernelInvoker,
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
 
     public override MarketAgentStage Stage => MarketAgentStage.Reasoning;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.PlanParsing];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

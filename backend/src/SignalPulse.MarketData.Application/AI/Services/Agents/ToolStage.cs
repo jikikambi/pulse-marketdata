@@ -8,10 +8,11 @@ namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
 public sealed class ToolStage(IQuoteInfoTool quoteTool,
     ILogger<ToolStage> logger,
-    IWorkflowOutcomeFactory outcomeFactory) 
+    IWorkflowOutcomeFactory outcomeFactory)
     : MarketAgentStageBase<ToolStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.Tooling;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.PlanParsing];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

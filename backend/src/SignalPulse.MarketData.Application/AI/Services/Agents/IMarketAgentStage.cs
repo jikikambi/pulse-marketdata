@@ -6,5 +6,6 @@ namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 public interface IMarketAgentStage
 {
     MarketAgentStage Stage { get; }
+    IReadOnlyCollection<MarketAgentStage> DependsOn { get; }
     Task ExecuteAsync(MarketAgentWorkflowContext ctx, CancellationToken ct);
 }

@@ -10,6 +10,7 @@ public sealed class ValidationInputStage(ILogger<ValidationInputStage> logger,
     : MarketAgentStageBase<ValidationInputStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.ValidationInput;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [];
 
     protected override Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

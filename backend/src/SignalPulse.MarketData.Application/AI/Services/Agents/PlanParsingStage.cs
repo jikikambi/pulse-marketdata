@@ -11,6 +11,7 @@ public sealed class PlanParsingStage(ILogger<PlanParsingStage> logger,
     : MarketAgentStageBase<PlanParsingStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.PlanParsing;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.Planning];
 
     protected override Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

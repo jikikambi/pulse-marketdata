@@ -18,6 +18,8 @@ public abstract class MarketAgentStageBase<TStage>(ILogger<TStage> logger) : IMa
     protected readonly ILogger<TStage> Logger = logger;
     public abstract MarketAgentStage Stage { get; }
 
+    public virtual IReadOnlyCollection<MarketAgentStage> DependsOn => [];
+
     public async Task ExecuteAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {
         var started = DateTimeOffset.UtcNow;

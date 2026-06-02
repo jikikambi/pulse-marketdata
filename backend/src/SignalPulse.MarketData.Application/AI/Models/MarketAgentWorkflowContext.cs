@@ -1,7 +1,5 @@
-﻿using SignalPulse.MarketData.Application.AI.Models.Enums;
-using SignalPulse.MarketData.Infrastructure.Elastic;
+﻿using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Policies.Contracts;
-using System.Diagnostics;
 
 namespace SignalPulse.MarketData.Application.AI.Models;
 
@@ -20,11 +18,10 @@ public sealed class MarketAgentWorkflowContext : IPolicyEventEmitter
     public FinalDecisionResult? FinalDecision { get; set; }
     public AIInsightResult? FinalResult { get; private set; }
     public bool IsTerminated => FinalResult is not null;
-    public MarketAgentStage CurrentStage { get; set; }
-    public Stopwatch Stopwatch { get; } = Stopwatch.StartNew();
     public string CorrelationId => Input.CorrelationId.ToString();
     public string? PlanRaw { get; set; }
-    
+    public CancellationTokenSource? WorkflowCancellationSource { get; set; }
+
     public void Terminate(AIInsightResult result)
     {
         FinalResult = result;

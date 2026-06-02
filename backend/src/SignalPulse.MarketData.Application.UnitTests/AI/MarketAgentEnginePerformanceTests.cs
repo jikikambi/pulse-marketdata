@@ -32,6 +32,9 @@ public sealed class MarketAgentEnginePerformanceTests
     private readonly IWorkflowEventSink _eventSink = A.Fake<IWorkflowEventSink>();
     private readonly IAiPolicyRegistry _policyRegistry = A.Fake<IAiPolicyRegistry>();
     private readonly IMarketStageOrchestrator _orchestrator = A.Fake<IMarketStageOrchestrator>();
+    private static readonly IOptions<MarketAgentOptions> options = Options.Create(new MarketAgentOptions { MaxParallelStages = 3 });
+
+    private readonly IMarketStageScheduler _scheduler = new MarketStageScheduler(options);
 
     private readonly ILogger<MarketAgentEngine> _logger = NullLogger<MarketAgentEngine>.Instance;
 
@@ -897,7 +900,7 @@ public sealed class MarketAgentEnginePerformanceTests
         new PersistenceStage( _store,  NullLogger<PersistenceStage>.Instance, outcomeFactory)
         };
 
-        return new MarketAgentEngine(stages, _logger, _eventSink, outcomeFactory, _policyRegistry, _orchestrator);
+        return new MarketAgentEngine(stages, _logger, _eventSink, outcomeFactory, _policyRegistry, _orchestrator, _scheduler);
     }
 
     private static QuoteInsightInput CreateValidInput(

@@ -10,6 +10,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Persistence;
@@ -118,11 +119,12 @@ public static class ServiceCollectionExtensions
         services.Configure<ModelSecretsOptions>(configuration.GetSection("ModelSecrets"));
         services.Configure<PollingOptions>(configuration.GetSection("Polling"));
         services.Configure<AgentDebugOptions>(configuration.GetSection("AgentDebug"));
+        services.Configure<MarketAgentOptions>(configuration.GetSection("MarketAgent"));
 
         services.AddSingleton<IAlphaVantageQuoteMapper, AlphaVantageQuoteMapper>();
         services.AddSingleton<IAlphaVantageForexDailyMapper, AlphaVantageForexDailyMapper>();
         services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageQuoteRequest, AlphaVantageQuoteResponse>, AlphaVantageQuoteFallbackService>();
-        services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageForexDailyRequest, AlphaVantageForexDailyResponse>, AlphaVantageForexFallbackService>();
+        services.AddSingleton<IAlphaVantageFallbackService<AlphaVantageForexDailyRequest, AlphaVantageForexDailyResponse>, AlphaVantageForexFallbackService>();        
     }
 
     public static IServiceCollection AddElasticSearch(this IServiceCollection services, IConfiguration config)

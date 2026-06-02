@@ -10,6 +10,7 @@ public sealed class DecisionStage(IFinalDecisionAgent finalDecisionAgent,
     : MarketAgentStageBase<DecisionStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.Decision;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.Scoring];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

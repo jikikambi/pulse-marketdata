@@ -11,6 +11,7 @@ public sealed class RiskStage(IRiskAgent riskAgent,
     : MarketAgentStageBase<RiskStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.RiskEvaluation;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.Reasoning];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

@@ -37,6 +37,7 @@ public static class MarketDataSemanticKernelExtentions
 
         services.AddSingleton<IAiPolicyRegistry, AiPolicyRegistry>();
         services.AddScoped<IMarketStageOrchestrator, MarketStageOrchestrator>();
+        services.AddScoped<IMarketStageScheduler, MarketStageScheduler>();
 
         services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IValidatorAgent, ValidatorAgent>();

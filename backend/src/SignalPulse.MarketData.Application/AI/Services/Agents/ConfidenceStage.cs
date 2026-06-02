@@ -9,6 +9,7 @@ public sealed class ConfidenceStage(IConfidenceScoringAgent confidenceScoringAge
     : MarketAgentStageBase<ConfidenceStage>(logger)
 {
     public override MarketAgentStage Stage => MarketAgentStage.Scoring;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.Validation, MarketAgentStage.RiskEvaluation];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {

@@ -45,16 +45,16 @@ public sealed class AiPolicyRegistry(ILogger<AiPolicyRegistry> logger)
         logger);
 
     private readonly IAsyncPolicy _elasticPolicy = CreateElasticPolicy(logger);
+
+    private readonly IAsyncPolicy _dataAccessPolicy = CreateDataAccessPolicy();
+
+    public IAsyncPolicy GetDataAccessPolicy() => _dataAccessPolicy;
     public IAsyncPolicy GetPlannerPolicy() => _plannerPolicy;
     public IAsyncPolicy GetReasonerPolicy() => _reasonerPolicy;
     public IAsyncPolicy GetToolingPolicy() => _toolingPolicy;
     public IAsyncPolicy GetValidationPolicy() => _validationPolicy;
     public IAsyncPolicy GetDecisionPolicy() => _decisionPolicy;
     public IAsyncPolicy GetElasticPolicy() => _elasticPolicy;
-    public IAsyncPolicy GetDataAccessPolicy() => Policy.WrapAsync(
-        CreateDataAccessRetryPolicy(),
-        CreateDataAccessCircuitBreaker(),
-        CreateDataAccessTimeoutPolicy());
 
     private static IAsyncPolicy CreateAiPolicy(string operation, int timeoutSeconds, int retryCount, int exceptionsAllowedBeforeBreaking, int durationOfBreakSeconds, ILogger logger)
     {
@@ -152,22 +152,18 @@ public sealed class AiPolicyRegistry(ILogger<AiPolicyRegistry> logger)
         return Policy.WrapAsync(retry, breaker, timeout);
     }
 
-    private static IAsyncPolicy CreateDataAccessRetryPolicy()
-    {
-        return Policy.Handle<Exception>(IsTransientDataException)
-            .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: retry => TimeSpan.FromMilliseconds(250 * retry));
-    }
+    private static IAsyncPolicy CreateDataAccessRetryPolicy() => Policy.Handle<Exception>(IsTransientDataException)
+        .WaitAndRetryAsync(retryCount: 3, sleepDurationProvider: retry => TimeSpan.FromMilliseconds(250 * retry));
 
-    private static IAsyncPolicy CreateDataAccessCircuitBreaker()
-    {
-        return Policy.Handle<Exception>(IsTransientDataException)
-            .CircuitBreakerAsync(exceptionsAllowedBeforeBreaking: 5, durationOfBreak: TimeSpan.FromSeconds(30));
-    }
+    private static IAsyncPolicy CreateDataAccessCircuitBreaker() => Policy.Handle<Exception>(IsTransientDataException)
+        .CircuitBreakerAsync(exceptionsAllowedBeforeBreaking: 5, durationOfBreak: TimeSpan.FromSeconds(30));
 
-    private static IAsyncPolicy CreateDataAccessTimeoutPolicy()
-    {
-        return Policy.TimeoutAsync(TimeSpan.FromSeconds(5));
-    }
+    private static IAsyncPolicy CreateDataAccessTimeoutPolicy() => Policy.TimeoutAsync(TimeSpan.FromSeconds(5));
+
+    private static IAsyncPolicy CreateDataAccessPolicy() => Policy.WrapAsync(
+        CreateDataAccessRetryPolicy(),
+        CreateDataAccessCircuitBreaker(),
+        CreateDataAccessTimeoutPolicy());
 
     private static bool IsTransientDataException(Exception ex) => ex is TimeoutException
         or HttpRequestException
@@ -176,7 +172,7 @@ public sealed class AiPolicyRegistry(ILogger<AiPolicyRegistry> logger)
         || ex.GetType().Name.Contains("Npgsql")
         || ex.GetType().Name.Contains("Mongo")
         || ex.GetType().Name.Contains("Redis");
-
+        
     private static async Task SafeEmit(IPolicyEventEmitter emitter, ILogger logger, string operation, string eventName, string message, object? data = null)
     {
         try

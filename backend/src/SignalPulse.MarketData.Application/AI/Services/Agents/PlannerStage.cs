@@ -21,6 +21,7 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
 
     public override MarketAgentStage Stage => MarketAgentStage.Planning;
+    public override IReadOnlyCollection<MarketAgentStage> DependsOn => [MarketAgentStage.ValidationInput];
 
     protected override async Task ExecuteInternalAsync(MarketAgentWorkflowContext ctx, CancellationToken ct)
     {
