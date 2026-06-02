@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Infra/">
+    <File Path="../.gitignore" />
     <File Path="../infra/docker-compose.yml" />
     <File Path="Dev.md" />
   </Folder>

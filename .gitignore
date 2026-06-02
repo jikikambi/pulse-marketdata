@@ -111,7 +111,7 @@ DebugLogs/
 !README.md
 
 # Allow AI skills
-!AI/Skills/**/*.skill.md
+!**/skill.md
 
 # ===============================
 # OS-Specific
