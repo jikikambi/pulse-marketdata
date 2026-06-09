@@ -35,6 +35,9 @@ builder.Services.AddCors(options =>
 // --- SIGNALR ---
 builder.Services.AddSignalR().AddMessagePackProtocol();
 
+// --- Prometheus ---
+builder.Services.AddSignalPulsePrometheus();
+
 // --- Redis + Marten  ---
 builder.Services.AddMarketDataRedisMarten(builder.Configuration);
 
@@ -49,16 +52,20 @@ builder.Host.UseWolverine(opts =>
     opts.AddMarketDataWolverine(nameof(QuotePollingWorker));
 });
 
-// --- Background Worker ---
-builder.Services.AddHostedService<QuotePollingWorker>();
-builder.Services.AddHostedService<ForexPollingWorker>();
+builder.Services.AddSignalPulseHealthChecks(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Docker"))
+{
+    app.UseHttpsRedirection();
+}
 
 // --- CORS ----
 app.UseCors(CORS_POLICY);
+
+// --- Observability ---
+app.UseSignalPulseObservability();
 
 await app.Services.InitializeElasticAsync();
 

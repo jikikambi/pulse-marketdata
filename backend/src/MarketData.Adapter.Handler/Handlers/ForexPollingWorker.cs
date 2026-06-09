@@ -12,6 +12,7 @@ using Polly;
 using Polly.Retry;
 using Refit;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Application.AI.Services;
 
 namespace MarketData.Adapter.Handler.Handlers;
 
@@ -63,11 +64,13 @@ public class ForexPollingWorker(IServiceScopeFactory factory,
             }
             catch (ValidationException vex)
             {
+                ObservabilityMetrics.HandlerFailures.Add(1, [new("reason", "validation"), new("worker", "forex")]);
                 logger.LogWarning(vex, "Validation failed for {From}-{To}", fromSymbol, toSymbol);
                 continue;
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
+                ObservabilityMetrics.HandlerFailures.Add(1, [new("reason", "http"), new("worker", "forex")]);
                 logger.LogWarning(ex, "AlphaVantage request failed for {From}-{To}", fromSymbol, toSymbol);
                 continue;
             }
@@ -83,6 +86,8 @@ public class ForexPollingWorker(IServiceScopeFactory factory,
             var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             await publisher.Publish(message, stoppingToken);
+
+            ObservabilityMetrics.ForexProcessed.Add(1, [new("provider", "alphavantage"), new("from", fromSymbol), new("to", toSymbol)]);
 
             await DelayBetweenRequests(stoppingToken);
         }

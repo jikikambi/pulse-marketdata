@@ -6,6 +6,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+		<PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" />
+		<PackageReference Include="AspNetCore.HealthChecks.Redis" />
 		<PackageReference Include="Elastic.Clients.Elasticsearch" />
 		<PackageReference Include="Microsoft.SemanticKernel" />
 		<PackageReference Include="OpenTelemetry.Exporter.Console" />
@@ -17,6 +20,9 @@
 		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" />
 		<PackageReference Include="Polly" />
+		<PackageReference Include="prometheus-net.AspNetCore" />
+		<PackageReference Include="prometheus-net.AspNetCore.HealthChecks" />
+		<PackageReference Include="prometheus-net.DotNetRuntime" />
 		<PackageReference Include="WolverineFx" />
 	</ItemGroup>
 

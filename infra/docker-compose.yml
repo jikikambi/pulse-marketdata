@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -59,8 +59,17 @@ services:
     container_name: marketdata.adapter.handler
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:8080
       - Postgres__ConnectionString=Host=postgres;Port=5432;Database=signalpulsedb;Username=postgres;Password=postgres
       - Redis__Connection=redis:6379
+    ports:
+      - "5021:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: on-failure
     depends_on:
       rabbitmq:
@@ -69,21 +78,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-
-  marketData-adapter-api:
-    build:
-      context: ../backend
-      dockerfile: src/MarketData.Adapter.Api/Dockerfile
-    image: marketdata.adapter.api
-    container_name: marketdata.adapter.api
-    ports:
-      - 5069:80
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Docker
-      - "ASPNETCORE_URLS=http://+"
-    restart: on-failure
-    depends_on:
-      postgres:
+      elastic:
         condition: service_healthy
 
   elastic:
@@ -103,8 +98,43 @@ services:
       timeout: 5s
       retries: 10
 
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.4.0
+    container_name: lsp_kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elastic:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elastic:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: spm_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - marketdata-adapter-handler
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: spm_grafana
+    ports:
+    - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
   redis_data:
   rabbitmq_data:
   elastic_data:
+  grafana_data:

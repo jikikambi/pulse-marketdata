@@ -5,7 +5,6 @@ using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Policies;
 using System.Diagnostics;
-using System.Diagnostics.Metrics;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
@@ -18,10 +17,6 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
     IMarketStageScheduler scheduler)
 {
     private static readonly ActivitySource ActivitySource = new("SignalPulse.MarketAgent");
-    private static readonly Meter Meter = new("SignalPulse.MarketAgent");
-    private static readonly Histogram<double> WorkflowDuration = Meter.CreateHistogram<double>("marketagent.workflow.duration");
-    private static readonly Counter<long> WorkflowCompleted = Meter.CreateCounter<long>("marketagent.workflow.completed");
-    private static readonly Counter<long> WorkflowFailed = Meter.CreateCounter<long>("marketagent.workflow.failed");
     private readonly IAiPolicyRegistry _policyRegistry = policyRegistry;
 
     private readonly IReadOnlyList<IMarketAgentStage> _stages = [.. stages.OrderBy(x => x.Stage)];
@@ -36,6 +31,7 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
         workflowActivity?.SetTag("workflow.correlation_id", input.CorrelationId);
         workflowActivity?.SetTag("workflow.started_at", DateTimeOffset.UtcNow);
 
+        ObservabilityMetrics.WorkflowStarted.Add(1);
         logger.LogInformation("Starting market agent workflow for {Symbol}", input.Symbol);
 
         var ctx = new MarketAgentWorkflowContext
@@ -78,11 +74,16 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
             workflowActivity?.SetStatus(ActivityStatusCode.Ok);
 
-            WorkflowCompleted.Add(1);
+            ObservabilityMetrics.WorkflowCompleted.Add(1);
 
-            WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
+            ObservabilityMetrics.WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
 
             logger.LogInformation("Workflow completed in {ElapsedMs}ms for {Symbol}", sw.ElapsedMilliseconds, input.Symbol);
+
+            ctx.State.RecoverySummary = new RecoverySummary(TotalRecoveries: ctx.State.Recoveries.Count,
+                TotalFailures: ctx.State.Failures.Values.Sum(),
+                DegradedMode: ctx.State.IsDegradedMode,
+                Recoveries: ctx.State.Recoveries);
 
             return ctx.FinalResult ?? ctx.Insight ?? throw new InvalidOperationException($"Workflow completed without result for {input.Symbol}");
         }
@@ -94,12 +95,12 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
             workflowActivity?.AddException(ex);
 
-            WorkflowFailed.Add(1, new TagList
+            ObservabilityMetrics.WorkflowFailed.Add(1, new TagList
             {
                 { "reason", "unhandled_exception" }
             });
 
-            WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
+            ObservabilityMetrics.WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
 
             logger.LogCritical(ex, "Unhandled workflow failure for {Symbol} after {ElapsedMs}ms", input.Symbol, sw.ElapsedMilliseconds);
 
@@ -116,6 +117,8 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
     private async Task ExecuteStageAsync(IMarketAgentStage stage, MarketAgentWorkflowContext ctx, Activity? workflowActivity, Stopwatch sw, CancellationToken ct)
     {
         using var activity = ActivitySource.StartActivity($"Stage.{stage.Stage}");
+        var stageSw = Stopwatch.StartNew();
+
         activity?.SetTag("stage.name", stage.Stage.ToString());
         activity?.SetTag("workflow.symbol", ctx.Input.Symbol);
         activity?.SetTag("workflow.correlation_id", ctx.Input.CorrelationId);
@@ -186,78 +189,151 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
             await HandleStageFailureAsync(stage, ctx, workflowActivity, sw, ex, ct);
         }
+        finally
+        {
+            stageSw.Stop();
+
+            ObservabilityMetrics.StageDuration.Record(stageSw.Elapsed.TotalMilliseconds, new TagList
+            {
+                { "stage", stage.Stage.ToString() }
+            });
+
+            activity?.SetTag("stage.duration_ms", stageSw.Elapsed.TotalMilliseconds);
+        }
     }
 
     private async Task HandleStageFailureAsync(IMarketAgentStage stage, MarketAgentWorkflowContext ctx, Activity? workflowActivity, Stopwatch sw, Exception ex, CancellationToken ct)
     {
         scheduler.MarkFailed(stage.Stage);
+        ctx.State.IncrementFailure(stage.Stage);
 
         var failure = await orchestrator.HandleFailureAsync(ctx, stage, ex, ct);
 
-        if (failure.UseFallback && failure.FallbackStage is not null)
+        if (failure.Strategy != RecoveryStrategy.Terminate)
         {
-            var fallback = orchestrator.ResolveStage(failure.FallbackStage.Value);
+            ctx.State.Recoveries.Add(new RecoveryEvent(stage.Stage, failure.Strategy, failure.Reason ?? ex.Message, DateTimeOffset.UtcNow));
+        }
 
-            if (fallback is not null)
+        await ctx.EmitAsync(stage.Stage.ToString(), "recovery_applied", failure.Reason ?? failure.Strategy.ToString(), new
+        {
+            Stage = stage.Stage.ToString(),
+            Strategy = failure.Strategy.ToString()
+        }, ct);
+
+        workflowActivity?.AddEvent(new ActivityEvent($"recovery:{failure.Strategy}", tags: new ActivityTagsCollection
+        {
+            { "stage", stage.Stage.ToString() },
+            { "strategy", failure.Strategy.ToString() }
+        }));
+
+        if (failure.Strategy != RecoveryStrategy.Terminate)
+        {
+            ObservabilityMetrics.RecoveryApplied.Add(1, new TagList
             {
-                logger.LogWarning("Executing fallback stage {FallbackStage}", failure.FallbackStage);
+                { "stage", stage.Stage.ToString() },
+                { "strategy", failure.Strategy.ToString() }
+            });
+        }
 
-                workflowActivity?.AddEvent(new ActivityEvent($"fallback:{failure.FallbackStage}"));
-
-                try
+        // Recovery execution
+        switch (failure.Strategy)
+        {
+            case RecoveryStrategy.Fallback:
                 {
-                    await fallback.ExecuteAsync(ctx, ct);
-                    scheduler.MarkCompleted(failure.FallbackStage.Value);
+                    if (failure.FallbackStage is null)
+                    {
+                        throw new InvalidOperationException($"Fallback strategy specified without fallback stage for {stage.Stage}");
+                    }
+
+                    var fallback = orchestrator.ResolveStage(failure.FallbackStage.Value) ?? throw new InvalidOperationException($"Fallback stage {failure.FallbackStage} could not be resolved");
+
+                    logger.LogWarning("Executing fallback stage {FallbackStage}", failure.FallbackStage);
+
+                    workflowActivity?.AddEvent(new ActivityEvent($"fallback:{failure.FallbackStage}"));
+
+                    try
+                    {
+                        await fallback.ExecuteAsync(ctx, ct);
+
+                        scheduler.MarkCompleted(failure.FallbackStage.Value);
+                        ctx.State.IncrementRecovery(stage.Stage);
+
+                        return;
+                    }
+                    catch (Exception fbEx)
+                    {
+                        scheduler.MarkFailed(failure.FallbackStage.Value);
+
+                        throw new InvalidOperationException("Fallback execution failed", fbEx);
+                    }
+                }
+
+            case RecoveryStrategy.Terminate:
+                {
+                    sw.Stop();
+
+                    workflowActivity?.SetStatus(ActivityStatusCode.Error, failure.Reason);
+
+                    ObservabilityMetrics.WorkflowFailed.Add(1, new TagList
+                    {
+                        { "reason", "stage_failure" }
+                    });
+
+                    ObservabilityMetrics.WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
+
+                    logger.LogCritical(ex, "Workflow terminating after stage failure");
+
+                    ctx.Terminate(outcomeFactory.Safe(ctx, failure.Reason ?? "workflow_failure"));
+
+                    ctx.WorkflowCancellationSource?.Cancel();
+
                     return;
                 }
-                catch (Exception fbEx)
+
+            case RecoveryStrategy.Skip:
                 {
-                    scheduler.MarkFailed(failure.FallbackStage.Value);
-                    throw new InvalidOperationException("Fallback execution failed", fbEx);
+                    scheduler.MarkSkipped(stage.Stage);
+
+                    logger.LogWarning("Skipping failed stage {Stage}", stage.Stage);
+
+                    return;
                 }
 
-            }
+            case RecoveryStrategy.Degrade:
+                {
+                    logger.LogWarning("Entering degraded mode after stage failure {Stage}", stage.Stage);
+
+                    ctx.State.IsDegradedMode = true;
+
+                    return;
+                }
+
+            case RecoveryStrategy.Reroute:
+                {
+                    throw new NotImplementedException("Reroute recovery strategy not implemented yet.");
+                }
+
+            default:
+                {
+                    throw new InvalidOperationException($"Unsupported recovery strategy: {failure.Strategy}");
+                }
         }
-
-        if (failure.TerminateWorkflow)
-        {
-            sw.Stop();
-
-            workflowActivity?.SetStatus(ActivityStatusCode.Error, failure.Reason);
-
-            WorkflowFailed.Add(1, new TagList
-            {
-                { "reason", "stage_failure" }
-            });
-
-            WorkflowDuration.Record(sw.Elapsed.TotalMilliseconds);
-
-            logger.LogCritical(ex, "Workflow terminating after stage failure");
-
-            ctx.Terminate(outcomeFactory.Safe(ctx, failure.Reason ?? "workflow_failure"));
-            ctx.WorkflowCancellationSource?.Cancel();
-            return;
-        }
-        throw ex;
     }
 
-    private IAsyncPolicy ResolvePolicy(MarketAgentStage stage)
+    private IAsyncPolicy ResolvePolicy(MarketAgentStage stage) => stage switch
     {
-        return stage switch
-        {
-            MarketAgentStage.Planning => _policyRegistry.GetPlannerPolicy(),
+        MarketAgentStage.Planning => _policyRegistry.GetPlannerPolicy(),
 
-            MarketAgentStage.Reasoning => _policyRegistry.GetReasonerPolicy(),
+        MarketAgentStage.Reasoning => _policyRegistry.GetReasonerPolicy(),
 
-            MarketAgentStage.Tooling => _policyRegistry.GetToolingPolicy(),
+        MarketAgentStage.Tooling => _policyRegistry.GetToolingPolicy(),
 
-            MarketAgentStage.Validation => _policyRegistry.GetValidationPolicy(),
+        MarketAgentStage.Validation => _policyRegistry.GetValidationPolicy(),
 
-            MarketAgentStage.Decision => _policyRegistry.GetDecisionPolicy(),
+        MarketAgentStage.Decision => _policyRegistry.GetDecisionPolicy(),
 
-            MarketAgentStage.Persistence => _policyRegistry.GetDataAccessPolicy(),
+        MarketAgentStage.Persistence => _policyRegistry.GetDataAccessPolicy(),
 
-            _ => Policy.NoOpAsync()
-        };
-    }
+        _ => Policy.NoOpAsync()
+    };
 }

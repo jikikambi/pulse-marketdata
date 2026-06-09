@@ -1,0 +1,23 @@
+{
+  "title": "Wolverine Messaging",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Messages/sec",
+      "targets": [
+        {
+          "expr": "sum(rate(wolverine_messages_processed_total[1m]))"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Message Processing Duration (p95)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(wolverine_message_duration_seconds_bucket[5m])) by (le))"
+        }
+      ]
+    }
+  ]
+}

@@ -1003,11 +1003,7 @@ public sealed class MarketAgentEnginePerformanceTests
             .Returns(new StageExecutionDecision(Execute: true));
 
         A.CallTo(() => _orchestrator.HandleFailureAsync(A<MarketAgentWorkflowContext>._, A<IMarketAgentStage>._, A<Exception>._, A<CancellationToken>._))
-            .Returns(new StageFailureAction(
-                ContinueWorkflow: false,
-                RetryStage: false,
-                UseFallback: false,
-                TerminateWorkflow: true));
+            .Returns(new StageFailureAction(RecoveryStrategy.Terminate, "test failure"));
     }
 
     private void SetupSuccessfulPipeline(QuoteInsightInput input)

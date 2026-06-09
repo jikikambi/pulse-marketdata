@@ -12,6 +12,7 @@ using Polly;
 using Polly.Retry;
 using Refit;
 using SignalPulse.AI.SemanticKernel;
+using SignalPulse.MarketData.Application.AI.Services;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 
 namespace MarketData.Adapter.Handler.Handlers;
@@ -72,6 +73,7 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
             }
             catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
             {
+                ObservabilityMetrics.HandlerFailures.Add(1, [new("reason", "http"), new("worker", symbol)]);
                 logger.LogWarning(ex, "AlphaVantage request failed for {Symbol}", symbol);
                 continue;
             }
@@ -87,6 +89,8 @@ public sealed class QuotePollingWorker(IServiceScopeFactory factory,
             var publisher = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             await publisher.Publish(message, stoppingToken);
+
+            ObservabilityMetrics.QuotesProcessed.Add(1, [new("provider", "alphavantage"), new("symbol", symbol)]);
 
             if (debugOptions.Value.Enabled)
             {

@@ -1,0 +1,25 @@
+{
+  "title": "API Performance",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Request Duration",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(aspnetcore_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 latency"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Request Count",
+      "targets": [
+        {
+          "expr": "sum(rate(aspnetcore_requests_total[1m]))"
+        }
+      ]
+    }
+  ]
+}

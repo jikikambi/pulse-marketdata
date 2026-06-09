@@ -26,7 +26,7 @@ public static class ServiceCollectionExtensions
 {
     public static WebApplicationBuilder ConfigureOpenTelemetry(this WebApplicationBuilder builder)
     {
-        using var connection = ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379");
+        using var connection = ConnectionMultiplexer.Connect(builder.Configuration["Redis:Connection"] ?? "localhost:6379");
 
         builder.Logging.AddOpenTelemetry(logging =>
         {

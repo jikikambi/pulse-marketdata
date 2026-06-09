@@ -2,10 +2,16 @@
 
 namespace SignalPulse.MarketData.Application.AI.Models;
 
+//public sealed record StageFailureAction(
+//    bool ContinueWorkflow,
+//    bool RetryStage,
+//    bool UseFallback,
+//    bool TerminateWorkflow,
+//    MarketAgentStage? FallbackStage = null,
+//    string? Reason = null);
+
 public sealed record StageFailureAction(
-    bool ContinueWorkflow,
-    bool RetryStage,
-    bool UseFallback,
-    bool TerminateWorkflow,
+    RecoveryStrategy Strategy,
+    string? Reason = null,
     MarketAgentStage? FallbackStage = null,
-    string? Reason = null);
+    MarketAgentStage? AlternateStage = null);
