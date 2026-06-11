@@ -1,5 +1,4 @@
 ﻿using FakeItEasy;
-using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -9,65 +8,11 @@ using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Infrastructure.Elastic;
 using SignalPulse.MarketData.Infrastructure.Policies;
 
-namespace SignalPulse.MarketData.Application.UnitTests.AI;
+namespace SignalPulse.MarketAgent.IntegrationTests;
 
-public class MarketAgentEngineObservabilityTests
+public static class MarketAgentEngineFactory
 {
-    [Fact]
-    public async Task WorkflowStarted_metric_increments()
-    {
-        using var metrics = new TestMetricCollector();
-
-        var engine = CreateEngine([new SlowStage()]);
-
-        await engine.RunAsync(CreateInput(), CancellationToken.None);
-
-        metrics.Counters["marketagent.workflow.started"].Should().Be(1);
-    }
-       
-    [Fact]
-    public async Task WorkflowFailed_metric_increments()
-    {
-        using var metrics = new TestMetricCollector();
-
-        var engine = CreateEngine([new ExplodingStage()], RecoveryStrategy.Terminate);
-
-        await engine.RunAsync(CreateInput(), CancellationToken.None);
-
-        metrics.Counters["marketagent.workflow.failed"].Should().Be(1);
-    }
-
-    [Fact]
-    public async Task RecoveryApplied_metric_increments()
-    {
-        using var metrics = new TestMetricCollector();
-
-        var engine = CreateEngine([new ExplodingStage()], RecoveryStrategy.Skip);
-
-        await engine.RunAsync(CreateInput(), CancellationToken.None);
-
-        metrics.Counters["marketagent.workflow.recoveries"].Should().Be(1);
-    }
-
-    [Fact]
-    public async Task StageDuration_records_measurement()
-    {
-        using var metrics = new TestMetricCollector();
-
-        var engine = CreateEngine([new SlowStage()]);
-
-        await engine.RunAsync(CreateInput(), CancellationToken.None);
-
-        metrics.Histograms.Should().ContainKey("marketagent.stage.duration");
-
-        metrics.Histograms["marketagent.stage.duration"].Should().NotBeEmpty();
-
-        metrics.Histograms["marketagent.stage.duration"].First().Should().BeGreaterThan(0);
-    }
-
-    private static QuoteInsightInput CreateInput() => new("AAPL", 210.15m, 1.25m, 1_000_000, Guid.NewGuid());
-
-    private static MarketAgentEngine CreateEngine(IEnumerable<IMarketAgentStage> stages, RecoveryStrategy recoveryStrategy = RecoveryStrategy.Skip)
+    public static MarketAgentEngine CreateEngine(IEnumerable<IMarketAgentStage> stages, RecoveryStrategy recoveryStrategy = RecoveryStrategy.Skip)
     {
         var logger = A.Fake<ILogger<MarketAgentEngine>>();
 

@@ -34,6 +34,7 @@
   </Folder>
   <Folder Name="/src/Services/" />
   <Folder Name="/src/Services/MarketData/">
+    <Project Path="src/SignalPulse.MarketAgent.IntegrationTests/SignalPulse.MarketAgent.IntegrationTests.csproj" Id="54473c9d-a01f-45d7-9f87-21de7c2c960c" />
     <Project Path="src/SignalPulse.MarketData.Api/SignalPulse.MarketData.Api.csproj" Id="a755a870-081f-4344-85a3-2b89ec77deff" />
     <Project Path="src/SignalPulse.MarketData.Application.UnitTests/SignalPulse.MarketData.Application.UnitTests.csproj" Id="ce4e83d7-0979-456a-b479-a9f8cb4f8988" />
     <Project Path="src/SignalPulse.MarketData.Application/SignalPulse.MarketData.Application.csproj" Id="fa90ea4e-1d5c-4309-8d96-7883ff205938" />
