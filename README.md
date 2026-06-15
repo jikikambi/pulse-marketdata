@@ -155,37 +155,85 @@ The Market Agent Engine is a **workflow-first AI orchestration system** where:
 
 # Architecture Diagram
 
-```mermaid id="mkt1"
+```mermaid
 flowchart TD
 
-Input[QuoteInsightInput] --> Engine[MarketAgentEngine]
+Input[QuoteInsightInput]
+    --> Engine[MarketAgentEngine]
 
+Engine --> Context[MarketAgentWorkflowContext]
 Engine --> Scheduler[MarketStageScheduler]
+Engine --> Orchestrator[MarketStageOrchestrator]
 
 Scheduler --> Batch[Parallel Batch Execution]
 
+Batch --> ValidationInput[ValidationInput Stage]
 Batch --> Planning[Planning Stage]
+Batch --> PlanParsing[PlanParsing Stage]
+Batch --> Tooling[Tool Stage]
 Batch --> Reasoning[Reasoning Stage]
-Batch --> Tooling[Tool Execution]
 Batch --> Validation[Validation Stage]
-Batch --> Risk[Risk Evaluation]
-Batch --> Scoring[Confidence Scoring]
-Batch --> Decision[Final Decision]
+Batch --> Risk[Risk Evaluation Stage]
+Batch --> Scoring[Confidence Scoring Stage]
+Batch --> Decision[Decision Stage]
 Batch --> Persistence[Persistence Stage]
 
-Planning --> Policies[IAiPolicyRegistry]
-Reasoning --> Policies
+ValidationInput --> Policies[IAiPolicyRegistry]
+Planning --> Policies
+PlanParsing --> Policies
 Tooling --> Policies
+Reasoning --> Policies
 Validation --> Policies
 Risk --> Policies
 Scoring --> Policies
 Decision --> Policies
 Persistence --> Policies
 
-Policies --> Retry[Retry / Circuit Breaker / Timeout]
+Policies --> Resilience[
+Retry
+Circuit Breaker
+Timeout
+Fallback
+]
 
-Decision --> Output[AIInsightResult]
+Batch --> Failure[Stage Failure]
 
-Output --> Observability[OpenTelemetry + Metrics + Logs]
+Failure --> Classification[Failure Classification]
+Classification --> Escalation[Adaptive Escalation]
+
+Escalation --> Skip[Skip]
+Escalation --> Degrade[Degraded Mode]
+Escalation --> Fallback[Fallback Stage]
+Escalation --> Reroute[Reroute To Alternate Stage]
+Escalation --> Terminate[Terminate Workflow]
+
+Reroute --> AlternateStage[Alternate Stage Execution]
+
+Engine --> Outcome[AIInsightResult]
+
+Engine --> State[MarketAgentState]
+Context --> State
+
+State --> RecoveryHistory[Recovery History]
+State --> RetryCount[Retry Count]
+State --> DegradedFlag[Degraded Mode Flag]
+State --> ReroutedStages[Rerouted Stages]
+
+Engine --> Observability
+
+Observability --> Metrics[Prometheus Metrics]
+Observability --> Traces[OpenTelemetry Traces]
+Observability --> Logs[Serilog + Elasticsearch]
+Observability --> Dashboards[Grafana + Kibana]
+
+Metrics --> RecoveryMetrics[
+workflow.started
+workflow.completed
+workflow.failed
+workflow.recoveries
+stage.duration
+workflow.duration
+]
 ```
+
 
