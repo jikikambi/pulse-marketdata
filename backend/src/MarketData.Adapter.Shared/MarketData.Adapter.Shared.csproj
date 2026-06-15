@@ -13,6 +13,7 @@
 	<ItemGroup>
 		<PackageReference Include="FluentValidation" />
 		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+		<PackageReference Include="MessagePack" />
 		<PackageReference Include="Microsoft.AspNet.WebApi.Client" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" />

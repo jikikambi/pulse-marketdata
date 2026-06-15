@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
+	  <PackageReference Include="MessagePack" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\MarketData.Adapter.Shared\MarketData.Adapter.Shared.csproj" />
 	</ItemGroup>
 

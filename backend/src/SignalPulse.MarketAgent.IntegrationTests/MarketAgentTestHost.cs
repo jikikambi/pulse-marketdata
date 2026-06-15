@@ -23,7 +23,7 @@ public sealed class MarketAgentTestHost : IAsyncDisposable
         Engine = engine;
     }
 
-    public static async Task<MarketAgentTestHost> CreateAsync(IEnumerable<IMarketAgentStage> stages, RecoveryStrategy recoveryStrategy = RecoveryStrategy.Skip)
+    public static async Task<MarketAgentTestHost> CreateAsync(IEnumerable<IMarketAgentStage> stages, RecoveryStrategy recoveryStrategy = RecoveryStrategy.Skip, MarketAgentStage? alternateStage = null)
     {
         var builder = WebApplication.CreateBuilder();
 
@@ -34,7 +34,7 @@ public sealed class MarketAgentTestHost : IAsyncDisposable
             metrics.AddMeter("SignalPulse.MarketAgent").AddPrometheusExporter();
         });
 
-        var engine = MarketAgentEngineFactory.CreateEngine(stages, recoveryStrategy);
+        var (engine, sink) = MarketAgentEngineFactory.CreateEngine(stages, recoveryStrategy, alternateStage);
 
         builder.Services.AddSingleton(engine);
 

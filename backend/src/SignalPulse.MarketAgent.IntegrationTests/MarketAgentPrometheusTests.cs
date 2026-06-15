@@ -1,6 +1,8 @@
-﻿using FluentAssertions;
+﻿using FakeItEasy;
+using FluentAssertions;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
+using SignalPulse.MarketData.Application.AI.Services.Agents;
 using System.Globalization;
 
 namespace SignalPulse.MarketAgent.IntegrationTests;
@@ -89,6 +91,46 @@ public class MarketAgentPrometheusTests
         var count = double.Parse(countLine.Split(' ').Last(), CultureInfo.InvariantCulture);
 
         count.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task Reroute_emits_recovery_metric()
+    {
+        await using var host = await MarketAgentTestHost.CreateAsync([new ExplodingStage(), A.Fake<IMarketAgentStage>()], RecoveryStrategy.Reroute);
+
+        await host.Engine.RunAsync(CreateInput(), CancellationToken.None);
+
+        var metrics = await host.Client.GetStringAsync("/metrics");
+
+        metrics.Should().Contain("strategy=\"Reroute\"");
+    }
+
+    [Fact]
+    public async Task Reroute_increments_recovery_counter()
+    {
+        var riskStage = A.Fake<IMarketAgentStage>();
+
+        A.CallTo(() => riskStage.Stage).Returns(MarketAgentStage.RiskEvaluation);
+
+        A.CallTo(() => riskStage.DependsOn).Returns([MarketAgentStage.Reasoning]);
+
+        A.CallTo(() => riskStage.ExecuteAsync(A<MarketAgentWorkflowContext>._, A<CancellationToken>._))
+            .Returns(Task.CompletedTask);
+
+        await using var host = await MarketAgentTestHost.CreateAsync([new ExplodingStage(), riskStage], RecoveryStrategy.Reroute, MarketAgentStage.RiskEvaluation);
+
+        await host.Engine.RunAsync(CreateInput(), CancellationToken.None);
+
+        var metrics = await host.Client.GetStringAsync("/metrics");
+
+        var line = metrics.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Single(x => x.StartsWith("marketagent_workflow_recoveries_total") && x.Contains("strategy=\"Reroute\""));
+
+        line.Should().Contain("alternate_stage=\"RiskEvaluation\"");
+
+        var value = double.Parse(line.Split(' ').Last(), CultureInfo.InvariantCulture);
+
+        value.Should().BeGreaterThan(0);
     }
 
     private static QuoteInsightInput CreateInput() => new("MSFT", 100m, 2m, 1000, Guid.NewGuid());

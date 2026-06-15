@@ -228,11 +228,23 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
         if (failure.Strategy != RecoveryStrategy.Terminate)
         {
-            ObservabilityMetrics.RecoveryApplied.Add(1, new TagList
+            var tags = new TagList
             {
                 { "stage", stage.Stage.ToString() },
                 { "strategy", failure.Strategy.ToString() }
-            });
+            };
+
+            if (failure.AlternateStage is not null)
+            {
+                tags.Add("alternate_stage", failure.AlternateStage.Value.ToString());
+            }
+
+            if (failure.FallbackStage is not null)
+            {
+                tags.Add("fallback_stage", failure.FallbackStage.Value.ToString());
+            }
+
+            ObservabilityMetrics.RecoveryApplied.Add(1, tags);
         }
 
         // Recovery execution
@@ -310,7 +322,45 @@ public sealed class MarketAgentEngine(IEnumerable<IMarketAgentStage> stages,
 
             case RecoveryStrategy.Reroute:
                 {
-                    throw new NotImplementedException("Reroute recovery strategy not implemented yet.");
+                    if (failure.AlternateStage is null)
+                    {
+                        throw new InvalidOperationException($"Reroute specified without alternate stage.");
+                    }
+
+                    var alternate = orchestrator.ResolveStage(failure.AlternateStage.Value) ?? throw new InvalidOperationException($"Alternate stage {failure.AlternateStage} could not be resolved");
+
+                    logger.LogWarning("Rerouting {Stage} -> {Alternate}", stage.Stage, failure.AlternateStage);
+
+                    workflowActivity?.SetTag("workflow.rerouted_from", stage.Stage.ToString());
+                    workflowActivity?.SetTag("workflow.rerouted_to", failure.AlternateStage.Value.ToString());
+                    workflowActivity?.AddEvent(new ActivityEvent($"reroute:{failure.AlternateStage}", tags: new ActivityTagsCollection
+                    {
+                        { "from", stage.Stage.ToString() },
+                        { "to", failure.AlternateStage.Value.ToString() }
+                    }));
+
+                    await ctx.EmitAsync(stage.Stage.ToString(), "workflow_rerouted", $"Rerouted to {failure.AlternateStage}", new
+                    {
+                        From = stage.Stage.ToString(),
+                        To = failure.AlternateStage.Value.ToString()
+                    }, ct);
+
+                    try
+                    {
+                        await alternate.ExecuteAsync(ctx, ct);
+
+                        scheduler.MarkCompleted(failure.AlternateStage.Value);
+
+                        ctx.State.IncrementRecovery(stage.Stage);
+
+                        return;
+                    }
+                    catch (Exception rerouteEx)
+                    {
+                        scheduler.MarkFailed(failure.AlternateStage.Value);
+
+                        throw new InvalidOperationException("Rerouted stage execution failed", rerouteEx);
+                    }
                 }
 
             default:

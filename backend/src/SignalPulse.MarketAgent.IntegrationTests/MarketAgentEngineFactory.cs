@@ -12,9 +12,11 @@ namespace SignalPulse.MarketAgent.IntegrationTests;
 
 public static class MarketAgentEngineFactory
 {
-    public static MarketAgentEngine CreateEngine(IEnumerable<IMarketAgentStage> stages, RecoveryStrategy recoveryStrategy = RecoveryStrategy.Skip)
+    public static EngineTestContext CreateEngine(IEnumerable<IMarketAgentStage> stages, RecoveryStrategy recoveryStrategy = RecoveryStrategy.Skip, MarketAgentStage? alternateStage = null)
     {
         var logger = A.Fake<ILogger<MarketAgentEngine>>();
+
+        var stageMap = stages.ToDictionary(x => x.Stage);
 
         var sink = A.Fake<IWorkflowEventSink>();
 
@@ -45,8 +47,11 @@ public static class MarketAgentEngineFactory
         A.CallTo(() => orchestrator.EvaluateExecutionAsync(A<MarketAgentWorkflowContext>._, A<IMarketAgentStage>._, A<CancellationToken>._))
             .Returns(new StageExecutionDecision(Execute: true, Reason: null));
 
+        A.CallTo(() => orchestrator.ResolveStage(A<MarketAgentStage>._))
+            .ReturnsLazily((MarketAgentStage s) => stageMap.GetValueOrDefault(s));
+
         A.CallTo(() => orchestrator.HandleFailureAsync(A<MarketAgentWorkflowContext>._, A<IMarketAgentStage>._, A<Exception>._, A<CancellationToken>._))
-            .Returns(new StageFailureAction(recoveryStrategy, "test"));
+            .Returns(new StageFailureAction(recoveryStrategy, "test", AlternateStage: alternateStage));
 
         var options = Options.Create(new MarketAgentOptions
         {
@@ -55,6 +60,8 @@ public static class MarketAgentEngineFactory
 
         var scheduler = new MarketStageScheduler(options);
 
-        return new MarketAgentEngine(stages, logger, sink, outcomeFactory, policyRegistry, orchestrator, scheduler);
+        var engine = new MarketAgentEngine(stages, logger, sink, outcomeFactory, policyRegistry, orchestrator, scheduler);
+
+        return new EngineTestContext(engine, sink);
     }
 }
