@@ -32,6 +32,9 @@ public sealed class MarketAgentEnginePerformanceTests
     private readonly IWorkflowEventSink _eventSink = A.Fake<IWorkflowEventSink>();
     private readonly IAiPolicyRegistry _policyRegistry = A.Fake<IAiPolicyRegistry>();
     private readonly IMarketStageOrchestrator _orchestrator = A.Fake<IMarketStageOrchestrator>();
+    private readonly IReasoningAgentResolver _reasoningAgentResolver = A.Fake<IReasoningAgentResolver>();
+    private readonly IReasoningAgent _primaryReasoningAgent = A.Fake<IReasoningAgent>();
+    private readonly IReasoningAgent _fallbackReasoningAgent = A.Fake<IReasoningAgent>();
     private static readonly IOptions<MarketAgentOptions> options = Options.Create(new MarketAgentOptions { MaxParallelStages = 3 });
 
     private readonly IMarketStageScheduler _scheduler = new MarketStageScheduler(options);
@@ -74,8 +77,8 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
-            .Returns(reasonerJson);
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
+           .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input1);
         SetupSuccessfulGovernancePipeline(input2);
@@ -89,7 +92,7 @@ public sealed class MarketAgentEnginePerformanceTests
         result1.Sentiment.Should().Be(SentimentType.Bullish);
         result2.Sentiment.Should().Be(SentimentType.Bullish);
 
-        A.CallTo(() => _store.SetPlanCacheAsync(cacheKey, A<string>._))
+        A.CallTo(() => _store.SetPlanCacheAsync(cacheKey, A<string>._!))
             .MustHaveHappenedOnceExactly();
 
         A.CallTo(() => _store.GetPlanCacheAsync(cacheKey))
@@ -98,7 +101,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .MustHaveHappenedOnceExactly();
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .MustHaveHappenedTwiceExactly();
     }
 
@@ -287,8 +290,8 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _quoteTool.GetQuoteContextAsync("AAPL"))
             .Returns(toolResult);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>
-            .That.Matches(args => args.ContainsName("context") && args["context"] != null && args["context"]!.ToString()!.Contains("145")), A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>
+            .That.Matches(x => x != null && x.Contains("145")), A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -341,7 +344,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
@@ -394,7 +397,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
@@ -448,7 +451,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         A.CallTo(() => _validatorAgent.ValidateAsync(input, A<AIInsightResult>._, A<CancellationToken>._))
@@ -507,7 +510,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -557,14 +560,14 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
 
         MarketAgentState? persistedState = null;
 
-        A.CallTo(() => _store.SetAsync(A<string>._, A<MarketAgentState>._))
+        A.CallTo(() => _store.SetAsync(A<string>._!, A<MarketAgentState>._))
             .Invokes(call => persistedState = call.GetArgument<MarketAgentState>(1));
 
         // Act
@@ -631,7 +634,10 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _reasoningAgentResolver.GetPrimary())
+            .Returns(_primaryReasoningAgent);
+
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
 
         SetupSuccessfulGovernancePipeline(input);
@@ -887,7 +893,7 @@ public sealed class MarketAgentEnginePerformanceTests
 
         new ToolStage( _quoteTool,  NullLogger<ToolStage>.Instance, outcomeFactory),
 
-        new ReasoningStage( _kernelInvoker, _policyRegistry,  NullLogger<ReasoningStage>.Instance,  outcomeFactory),
+        new ReasoningStage(NullLogger<ReasoningStage>.Instance,  outcomeFactory, _reasoningAgentResolver),
 
         new ValidationStage( _validatorAgent, NullLogger<ValidationStage>.Instance, outcomeFactory),
 
@@ -955,7 +961,7 @@ public sealed class MarketAgentEnginePerformanceTests
         A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, A<KernelArguments>._, A<CancellationToken>._))
             .Returns(plannerJson);
 
-        A.CallTo(() => _kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, A<KernelArguments>._, A<CancellationToken>._))
+        A.CallTo(() => _primaryReasoningAgent.GenerateAsync(A<QuoteInsightInput>._, A<string?>._, A<CancellationToken>._))
             .Returns(reasonerJson);
     }
 
@@ -998,6 +1004,12 @@ public sealed class MarketAgentEnginePerformanceTests
 
         A.CallTo(() => _policyRegistry.GetDataAccessPolicy())
         .Returns(Policy.Handle<Exception>().RetryAsync(0));
+
+        A.CallTo(() => _reasoningAgentResolver.GetPrimary())
+            .Returns(_primaryReasoningAgent);
+
+        A.CallTo(() => _reasoningAgentResolver.GetFallback())
+            .Returns(_fallbackReasoningAgent);
 
         A.CallTo(() => _orchestrator.EvaluateExecutionAsync(A<MarketAgentWorkflowContext>._, A<IMarketAgentStage>._, A<CancellationToken>._))
             .Returns(new StageExecutionDecision(Execute: true));

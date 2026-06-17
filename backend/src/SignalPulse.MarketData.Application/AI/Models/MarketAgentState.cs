@@ -29,7 +29,7 @@ public sealed class MarketAgentState
     public List<RecoveryEvent> Recoveries { get; set; } = [];
     public int GetFailureCount(MarketAgentStage stage) => _failures.TryGetValue(stage, out var count) ? count : 0;
     public IReadOnlyDictionary<MarketAgentStage, int> Failures => _failures;
-
+    public Dictionary<MarketAgentStage, string> AlternateAgentsUsed { get; } = [];
     public void IncrementRecovery(MarketAgentStage stage)
     {
         RecoveryCounts.TryAdd(stage, 0);
@@ -39,5 +39,5 @@ public sealed class MarketAgentState
     public void IncrementFailure(MarketAgentStage stage)
     {
         _failures[stage] = GetFailureCount(stage) + 1;
-    }    
+    }
 }

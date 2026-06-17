@@ -4,7 +4,6 @@
 	  <None Remove="AI\Skills\ForexInsight\skill.md" />
 	  <None Remove="AI\Skills\MarketPlanner\skill.md" />
 	  <None Remove="AI\Skills\MarketReasoner\skill.md" />
-	  <None Remove="AI\Skills\QuoteInsight\skill.md" />
 	  <None Remove="AI\Skills\ToolSelector\skill.md" />
 	  <None Remove="AI\Skills\ValidationAgent\skill.md" />
 	</ItemGroup>
@@ -17,9 +16,6 @@
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="AI\Skills\MarketReasoner\skill.md">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
-	  <Content Include="AI\Skills\QuoteInsight\skill.md">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="AI\Skills\ToolSelector\skill.md">

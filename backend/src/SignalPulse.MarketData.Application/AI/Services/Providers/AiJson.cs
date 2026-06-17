@@ -14,3 +14,9 @@ public static class AiJson
         }
     };
 }
+
+public static class ReasoningAgentNames
+{
+    public const string Template = "template";
+    public const string SemanticKernel = "semantic_kernel";
+}

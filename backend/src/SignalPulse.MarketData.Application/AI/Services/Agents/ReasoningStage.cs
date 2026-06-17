@@ -1,17 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Polly;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
-using SignalPulse.MarketData.Infrastructure.Policies;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
-public sealed class ReasoningStage(IKernelInvoker kernelInvoker,
-   IAiPolicyRegistry policyRegistry,
-    ILogger<ReasoningStage> logger, IWorkflowOutcomeFactory outcomeFactory)
+public sealed class ReasoningStage(ILogger<ReasoningStage> logger,
+    IWorkflowOutcomeFactory outcomeFactory,
+    IReasoningAgentResolver resolver)
     : MarketAgentStageBase<ReasoningStage>(logger)
 {
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(5);
@@ -29,27 +27,46 @@ public sealed class ReasoningStage(IKernelInvoker kernelInvoker,
 
         try
         {
-            var retryPolicy = policyRegistry.GetPlannerPolicy();
+            string? raw;
 
-            var result = await retryPolicy.ExecuteAsync(async () =>
+            try
             {
-                return await kernelInvoker.InvokeAsync(AgentConstants.ReasonerSkill, new KernelArguments
-                {
-                    ["symbol"] = ctx.Input.Symbol,
-                    ["price"] = ctx.Input.Price,
-                    ["changePercent"] = ctx.Input.ChangePercent,
-                    ["volume"] = ctx.Input.Volume,
-                    ["context"] = ctx.ToolContextJson ?? "null",
-                    ["correlationId"] = ctx.Input.CorrelationId
-                }, cts.Token);
-            });
+                var primary = resolver.GetPrimary();
+                raw = await primary.GenerateAsync(ctx.Input, ctx.ToolContextJson, cts.Token);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Primary reasoning agent failed for {Symbol}. Switching to alternate agent.", ctx.Input.Symbol);
 
-            var raw = result?.ToString();
+                var alternate = resolver.GetFallback();
+
+                if (alternate is null)
+                {
+                    Logger.LogError("No alternate reasoning agent available for {Symbol}", ctx.Input.Symbol);
+                    ctx.Terminate(outcomeFactory.Safe(ctx, "reasoner_no_alternate"));
+                    return;
+                }
+
+                raw = await alternate.GenerateAsync(ctx.Input, ctx.ToolContextJson, cts.Token);
+
+                ctx.State.AlternateAgentsUsed[Stage] = alternate.Name;
+
+                await ctx.EmitAsync(Stage.ToString(), "alternate_agent_used", alternate.Name, new
+                {
+                    Stage = Stage.ToString(),
+                    Agent = alternate.Name
+                }, ct);
+
+                ObservabilityMetrics.Agent.AlternateAgentUsed.Add(1, new TagList
+                {
+                    { "stage", Stage.ToString() },
+                    { "agent", alternate.Name }
+                });
+            }
 
             if (string.IsNullOrWhiteSpace(raw))
             {
                 Logger.LogWarning("Reasoner returned empty response for {Symbol}", ctx.Input.Symbol);
-
                 ctx.Terminate(outcomeFactory.Safe(ctx, "reasoner_empty_response"));
 
                 return;

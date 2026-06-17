@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Infrastructure.Persistence;
@@ -8,8 +9,7 @@ using System.ComponentModel;
 
 namespace SignalPulse.MarketData.Application.AI.Plugins;
 
-public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
-    IQuoteCache cache) : IQuoteInfoTool
+public class QuoteInfoPlugin(IServiceScopeFactory scopeFactory) : IQuoteInfoTool
 {
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
@@ -17,6 +17,11 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
     [Description("Provides historical or cached quote context for enrichment purposes.")]
     public async Task<QuoteContextResult?> GetQuoteContextAsync(string symbol)
     {
+        using var scope = scopeFactory.CreateScope();
+
+        var repo = scope.ServiceProvider.GetRequiredService<IReadModelRepository<QuoteReadModel>>();
+        var cache = scope.ServiceProvider.GetRequiredService<IQuoteCache>();
+
         var cached = await cache.GetAsync(symbol);
 
         if (cached is not null)
@@ -30,6 +35,7 @@ public class QuoteInfoPlugin(IReadModelRepository<QuoteReadModel> repo,
 
         try
         {
+            // re-check after lock
             cached = await cache.GetAsync(symbol);
 
             if (cached is not null)

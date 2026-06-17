@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Application.AI.Models;
+using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Plugins;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
@@ -11,6 +12,8 @@ using SignalPulse.MarketData.Application.AI.Services.Providers;
 using SignalPulse.MarketData.Application.AI.Skills.Services;
 using SignalPulse.MarketData.Application.Interfaces;
 using SignalPulse.MarketData.Infrastructure.Policies;
+using SignalPulse.Messaging.RabbitMq;
+
 namespace SignalPulse.MarketData.Application;
 
 public static class MarketDataSemanticKernelExtentions
@@ -27,13 +30,26 @@ public static class MarketDataSemanticKernelExtentions
 
         bool useMock = configuration.GetValue<bool>("Ai:UseMock");
 
-        services.AddScoped<QuoteInsightService>();
+        services.Configure<AiReasoningOptions>(configuration.GetSection("AI:Reasoning"));
+
+        var aiOptions = configuration.GetSection("AI:Reasoning").Get<AiReasoningOptions>() ?? throw new InvalidOperationException("AI Reasoning options missing");
+
         services.AddScoped<ForexInsightService>();
         services.AddSingleton<MarketAgentReplayService>();
         services.AddSingleton<MarketAgentDebugger>();
+        services.AddSingleton<MockQuoteInsightProvider>();
+        services.AddScoped<MockQuoteInsightProvider>();
+        services.AddScoped<IReasoningAgent, SemanticKernelReasoningAgent>();
+        services.AddScoped<IReasoningAgent, TemplateReasoningAgent>();
+        services.AddScoped<IReasoningAgentResolver, ReasoningAgentResolver>();
+        services.AddSingleton<OllamaReasoningAgent>();
         services.AddScoped<IQuoteInfoTool, QuoteInfoPlugin>();
-        services.AddScoped<ISkillRegistry, SemanticKernelSkillRegistry>();
-        services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
+
+        //if (aiOptions.Provider == ReasoningProvider.SemanticKernel)
+        //{
+            services.AddScoped<ISkillRegistry, SemanticKernelSkillRegistry>();
+            services.AddScoped<IKernelInvoker, SemanticKernelInvoker>();
+        //}
 
         services.AddSingleton<IAiPolicyRegistry, AiPolicyRegistry>();
         services.AddScoped<IMarketStageOrchestrator, MarketStageOrchestrator>();
@@ -42,7 +58,7 @@ public static class MarketDataSemanticKernelExtentions
         services.AddScoped<IRiskAgent, RiskAgent>();
         services.AddScoped<IValidatorAgent, ValidatorAgent>();
         services.AddScoped<IConfidenceScoringAgent, ConfidenceScoringAgent>();
-        services.AddScoped<IFinalDecisionAgent, FinalDecisionAgent>();        
+        services.AddScoped<IFinalDecisionAgent, FinalDecisionAgent>();
         services.AddScoped<IWorkflowOutcomeFactory, WorkflowOutcomeFactory>();
         services.AddScoped<IMarketAgentStage, ValidationInputStage>();
         services.AddScoped<IMarketAgentStage, PlannerStage>();
@@ -57,16 +73,15 @@ public static class MarketDataSemanticKernelExtentions
 
         services.AddScoped<MarketAgentEngine>();
 
+        services.AddScoped<IAiInsightProvider<QuoteInsightInput>, AgentQuoteInsightProvider>();
+
         if (useMock)
         {
-            services.AddSingleton<IAiInsightProvider<QuoteInsightInput>, MockQuoteInsightProvider>();
             services.AddSingleton<IAiInsightProvider<ForexInsightInput>, MockForexInsightProvider>();
         }
         else
         {
-            services.AddSingleton<IAiInsightProvider<QuoteInsightInput>, SemanticKernelQuoteInsightProvider>();
             services.AddSingleton<IAiInsightProvider<ForexInsightInput>, SemanticKernelForexInsightProvider>();
-            services.AddSingleton<IAiInsightProvider<QuoteInsightInput>, AgentQuoteInsightProvider>();
         }
 
         return services;

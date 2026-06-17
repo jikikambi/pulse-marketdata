@@ -16,4 +16,9 @@ public static class ObservabilityMetrics
     public static readonly Counter<long> RecoveryApplied = Meter.CreateCounter<long>("marketagent.workflow.recoveries");
     public static readonly Histogram<double> StageDuration = Meter.CreateHistogram<double>("marketagent.stage.duration", unit: "ms");
     public static readonly Histogram<double> WorkflowDuration = Meter.CreateHistogram<double>( "marketagent.workflow.duration", unit: "ms");
+
+    public static class Agent
+    {
+        public static readonly Counter<long> AlternateAgentUsed = Meter.CreateCounter<long>( "marketagent.alternate_agent.used");
+    }
 }
