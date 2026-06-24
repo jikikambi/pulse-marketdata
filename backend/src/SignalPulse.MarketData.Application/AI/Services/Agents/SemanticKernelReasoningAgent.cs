@@ -5,8 +5,7 @@ using SignalPulse.MarketData.Infrastructure.Policies;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
-public class SemanticKernelReasoningAgent(
-    IKernelInvoker kernelInvoker,
+public class SemanticKernelReasoningAgent(IKernelInvoker kernelInvoker,
     IAiPolicyRegistry policyRegistry) : IReasoningAgent
 {
     public string Name => "semantic_kernel";

@@ -4,7 +4,6 @@ using Microsoft.SemanticKernel;
 using SignalPulse.AI.SemanticKernel;
 using SignalPulse.MarketData.Application.AI.Cache;
 using SignalPulse.MarketData.Application.AI.Models;
-using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Plugins;
 using SignalPulse.MarketData.Application.AI.Services.Agents;
 using SignalPulse.MarketData.Application.AI.Services.Memory;

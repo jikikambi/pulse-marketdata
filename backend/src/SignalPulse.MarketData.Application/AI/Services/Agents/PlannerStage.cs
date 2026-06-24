@@ -1,19 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Polly;
 using SignalPulse.MarketData.Application.AI.Models;
 using SignalPulse.MarketData.Application.AI.Models.Enums;
 using SignalPulse.MarketData.Application.AI.Services.Memory;
 using SignalPulse.MarketData.Application.AI.Services.Providers;
-using SignalPulse.MarketData.Infrastructure.Policies;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 
 namespace SignalPulse.MarketData.Application.AI.Services.Agents;
 
-public sealed class PlannerStage(IKernelInvoker kernelInvoker,
+public sealed class PlannerStage(IPlannerAgentResolver plannerResolver,
     IAgentStateStore store,
-    IAiPolicyRegistry policyRegistry,
     ILogger<PlannerStage> logger,
     IWorkflowOutcomeFactory outcomeFactory)
     : MarketAgentStageBase<PlannerStage>(logger)
@@ -64,29 +61,33 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
             Logger.LogDebug("Planner cache miss for {Symbol}. CacheKey: {CacheKey}. Making LLM call...", input.Symbol, cacheKey);
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
             cts.CancelAfter(Timeout);
 
-            var policyContext = new Context
+            var primary = plannerResolver.GetPrimary();
+            var fallback = plannerResolver.GetFallback();
+
+            string? planRaw;
+
+            try
             {
-                ["emitter"] = ctx
-            };
-
-            var retryPolicy = policyRegistry.GetPlannerPolicy();
-
-            var planRaw = await retryPolicy.ExecuteAsync(async (_, token) =>
+                planRaw = await primary.GenerateAsync(input, ctx, Stage, cts.Token);
+            }
+            catch (Exception ex) when (fallback is not null)
             {
-                await ctx.EmitAsync(Stage.ToString(), "planner_invocation", "Invoking planner model", null, token);
+                Logger.LogWarning(ex, "Primary planner agent failed for {Symbol}. Switching to fallback agent.", input.Symbol);
 
-                return await kernelInvoker.InvokeAsync(AgentConstants.PlannerSkill, new KernelArguments
+                await ctx.EmitAsync(Stage.ToString(), "planner_fallback", $"Switching to fallback planner agent [{fallback.Name}]", null, cts.Token);
+
+                planRaw = await fallback.GenerateAsync(input, ctx, Stage, cts.Token);
+
+                ctx.State.AlternateAgentsUsed[Stage] = fallback.Name;
+
+                ObservabilityMetrics.Agent.AlternateAgentUsed.Add(1, new TagList
                 {
-                    ["symbol"] = input.Symbol,
-                    ["price"] = input.Price,
-                    ["changePercent"] = input.ChangePercent,
-                    ["volume"] = input.Volume,
-                    ["correlationId"] = input.CorrelationId
-                }, token);
-            }, policyContext, cts.Token);
+                    { "stage", Stage.ToString() },
+                    { "agent", fallback.Name }
+                });
+            }
 
             if (string.IsNullOrWhiteSpace(planRaw))
             {
@@ -137,6 +138,8 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
                 // PlanParsingStage owns actual validation.
             }
 
+            ctx.AddStep(AgentConstants.StepPlanner, input.Symbol, planRaw);
+
             Logger.LogInformation("Planner completed successfully for {Symbol}", input.Symbol);
 
         }
@@ -163,7 +166,5 @@ public sealed class PlannerStage(IKernelInvoker kernelInvoker,
 
             ctx.Terminate(fallback);
         }
-
-        ctx.AddStep(AgentConstants.StepPlanner, input.Symbol, ctx.PlanRaw!);
     }
 }
